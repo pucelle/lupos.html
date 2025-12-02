@@ -6,4 +6,7 @@ node_modules
 /tests/out/**/*.js
 .VSCodeCounter
 *.tsbuildinfo
+*.config.js
+*.config.cjs
+.VSCodeCounter
 **/.DS_STORE

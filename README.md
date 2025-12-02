@@ -1,13 +1,13 @@
 <h1 align="left">
-    <img src="https://github.com/pucelle/lupos.js/blob/master/images/logo.png?raw=true" width="32" height="32" alt="Lupos Logo" />
-    Lupos.js
+    <img src="https://github.com/pucelle/lupos.html/blob/master/images/logo.png?raw=true" width="32" height="32" alt="Lupos Logo" />
+    Lupos.html
 </h1>
 
 
 
 ## About
 
-**lupos.js** is a library for building Component-Based Web User Interface, powered by [lupos](https://github.com/pucelle/lupos).
+**lupos.html** is a library for building Component-Based Web User Interface, powered by [lupos](https://github.com/pucelle/lupos).
 
 
 
@@ -125,7 +125,7 @@ export class Checkbox extends Component {
 
 ## More about
 
-**lupos.js** was inspired by [lit-html](https://lit-html.polymer-project.org/) and [svelte](https://svelte.dev/).
+**lupos.html** was inspired by [lit-html](https://lit-html.polymer-project.org/) and [svelte](https://svelte.dev/).
 
 
 

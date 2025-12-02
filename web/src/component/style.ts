@@ -1,4 +1,4 @@
-import {Effector, Updatable, UpdateQueue} from '@pucelle/lupos'
+import {Effector, Updatable, UpdateQueue} from 'lupos'
 import {TemplateResult} from '../template'
 import {inSSR} from '../ssr'
 

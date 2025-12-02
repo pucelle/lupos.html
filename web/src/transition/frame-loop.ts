@@ -1,4 +1,4 @@
-import {AnimationFrame} from '@pucelle/lupos'
+import {AnimationFrame} from 'lupos'
 
 
 /** Callback with a timestamp as parameter. */

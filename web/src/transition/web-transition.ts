@@ -1,6 +1,6 @@
 import {getCSSEasingValue, WebTransitionEasingName} from './easing'
 import {PerFrameTransitionEvents, PerFrameTransitionOptions} from './per-frame-transition'
-import {EventFirer, promiseWithResolves} from '@pucelle/lupos'
+import {EventFirer, promiseWithResolves} from 'lupos'
 
 
 /** 

@@ -10,7 +10,7 @@ export type TemplateType = 'html' | 'css' | 'svg'
  * html`...`
  * ```
  * 
- * It will be replaced to a `CompiledTemplateResult` object after compiled by `@pucelle/lupos-compiler`.
+ * It will be replaced to a `CompiledTemplateResult` object after compiled by `lupos`.
  */
 export function html(strings: TemplateStringsArray, ...values: any[]): TemplateResult {
 	return new TemplateResult('html', strings, values)
@@ -25,7 +25,7 @@ export function html(strings: TemplateStringsArray, ...values: any[]): TemplateR
  * svg`...`
  * ```
  * 
- * It will be replaced to a `CompiledTemplateResult` object after compiled by `@pucelle/lupos-compiler`.
+ * It will be replaced to a `CompiledTemplateResult` object after compiled by `lupos`.
  */
 export function svg(strings: TemplateStringsArray, ...values: any[]): TemplateResult {
 	return new TemplateResult('svg', strings, values)

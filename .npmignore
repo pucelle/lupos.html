@@ -2,7 +2,11 @@ node_modules
 .vscode
 .VSCodeCounter
 src
-test
+tests
 tsconfig.json
 README.md
 *.tgz
+images
+*.tsbuildinfo
+*.config.cs
+*.config.cjs

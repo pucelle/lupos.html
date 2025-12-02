@@ -1,4 +1,4 @@
-import {UpdateQueue, promiseWithResolves} from '@pucelle/lupos'
+import {UpdateQueue, promiseWithResolves} from 'lupos'
 import {PerFrameTransition, PerFrameTransitionOptions} from './per-frame-transition'
 import {WebTransition, WebTransitionKeyFrame, WebTransitionOptions} from './web-transition'
 

@@ -1,4 +1,4 @@
-import {trackGet} from '@pucelle/lupos'
+import {trackGet} from 'lupos'
 import {TemplateSlot, SlotPosition, SlotPositionType, SlotEndOuterPositionType} from '../template'
 import {Component} from './component'
 import {RenderResult} from './types'

@@ -1,4 +1,4 @@
-import {UpdateQueue} from '@pucelle/lupos'
+import {UpdateQueue} from 'lupos'
 import {TransitionOptions, TransitionResult, Transition, WebTransitionProperties} from '../transition'
 import {assignWithoutKeys} from './utils'
 import {InternalPairKeysListMap} from '../../structs/map'

@@ -1,13 +1,13 @@
 {
-	"name": "@pucelle/lupos.js",
+	"name": "lupos.html",
 	"version": "0.1.0",
 	"description": "A Light Weight Web Component library based on ES Template Literal, and Typescript Transformer.",
 	"author": "pucelle",
 	"license": "MIT",
-	"homepage": "https://github.com/pucelle/lupos.js",
+	"homepage": "https://github.com/pucelle/lupos.html",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/pucelle/lupos.js.git"
+		"url": "https://github.com/pucelle/lupos.html.git"
 	},
 	"type": "module",
 	"main": "web/out/index.js",
@@ -26,12 +26,12 @@
 		"test": "vitest"
 	},
 	"dependencies": {
-		"@pucelle/lupos": "^0.1.0",
+		"lupos": "^0.1.0",
+		"ff-kit": "^2.0.1",
 		"linkedom": "^0.18.12"
 	},
 	"devDependencies": {
 		"typescript": "^5.8.3",
-		"vitest": "^3.2.4",
-		"happy-dom": "^20.0.10"
+		"vitest": "^3.2.4"
 	}
 }
