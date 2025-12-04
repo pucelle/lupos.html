@@ -1,6 +1,6 @@
 {
 	"name": "lupos.html",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "A Light Weight Web Component library based on ES Template Literal, and Typescript Transformer.",
 	"author": "pucelle",
 	"license": "MIT",
