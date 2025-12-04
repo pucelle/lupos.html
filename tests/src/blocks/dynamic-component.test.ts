@@ -1,4 +1,4 @@
-import {UpdateQueue} from '@pucelle/lupos'
+import {UpdateQueue} from 'lupos'
 import * as lupos from '../../../web/out'
 import {describe, it, expect} from 'vitest'
 

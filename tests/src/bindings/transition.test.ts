@@ -1,4 +1,4 @@
-import {DOMEvents, promiseWithResolves, UpdateQueue} from '@pucelle/lupos'
+import {DOMEvents, promiseWithResolves, UpdateQueue} from 'lupos'
 import * as lupos from '../../../web/out'
 import {describe, it, expect, vi} from 'vitest'
 

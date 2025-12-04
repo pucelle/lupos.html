@@ -8,5 +8,4 @@ node_modules
 *.tsbuildinfo
 *.config.js
 *.config.cjs
-.VSCodeCounter
 **/.DS_STORE

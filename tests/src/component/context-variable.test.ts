@@ -1,4 +1,4 @@
-import {setContext, UpdateQueue, useContext} from '@pucelle/lupos'
+import {setContext, UpdateQueue, useContext} from 'lupos'
 import * as lupos from '../../../web/out'
 import {describe, it, expect} from 'vitest'
 
