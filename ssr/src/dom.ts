@@ -1,4 +1,4 @@
-import {UpdateQueue} from '@pucelle/lupos'
+import {UpdateQueue} from 'lupos'
 import * as linkedom from 'linkedom'
 import {connectCustomElement, flushComponentStyles, render, RenderResult, resetInSSR} from '../../web/out'
 
@@ -29,7 +29,7 @@ export class SSR {
 		let parseHTML = linkedom.parseHTML as any
 
 		let {window: win} = parseHTML('<!DOCTYPE html><html><head></head><body></body></html>', {
-			location: {href: 'https://lupos.js' + this.path}
+			location: {href: 'https://lupos.html' + this.path}
 		})
 
 		let global = globalThis as any
