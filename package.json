@@ -27,7 +27,6 @@
 	},
 	"dependencies": {
 		"lupos": "^0.1.0",
-		"ff-kit": "^2.0.1",
 		"linkedom": "^0.18.12"
 	},
 	"devDependencies": {
