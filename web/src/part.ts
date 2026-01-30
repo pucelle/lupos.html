@@ -160,7 +160,7 @@ export class PartDelegator implements Part {
 		}
 
 		if (this.part) {
-			this.part.afterConnectCallback(param)
+			this.part.afterConnectCallback(param | PartCallbackParameterMask.FromOwnStateChange)
 		}
 
 		this.connected = true
@@ -171,8 +171,9 @@ export class PartDelegator implements Part {
 			return
 		}
 
+		// Must ensure part truly release, so should union `FromOwnStateChange`.
 		if (this.part) {
-			this.part.beforeDisconnectCallback(param)
+			this.part.beforeDisconnectCallback(param | PartCallbackParameterMask.FromOwnStateChange)
 		}
 
 		this.connected = false
