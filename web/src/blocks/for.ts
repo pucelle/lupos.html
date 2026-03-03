@@ -54,8 +54,7 @@ export class ForBlock<T = any> {
 			let {type, insertIndex, fromIndex, toIndex} = record
 			let nextOldT = this.getItemAtIndex(oldTs, insertIndex)
 			let fromT = this.getItemAtIndex(oldTs, fromIndex)
-			let newItem = toIndex >= 0 ? newData[toIndex] : null
-			let result = newItem ? this.renderFn(newItem, toIndex) : null
+			let result = toIndex >= 0 ? this.renderFn(newData[toIndex], toIndex) : null
 
 			if (type === EditType.Leave) {
 				this.leaveTemplate(fromT!, result!)
