@@ -51,6 +51,7 @@ export class TransitionBinding implements Binding, Part {
 	}
 
 	afterConnectCallback(param: PartCallbackParameterMask | 0) {
+		this.cancel()
 
 		// Connect immediately manually, no need to play transition.
 		if (param & PartCallbackParameterMask.MoveImmediately) {

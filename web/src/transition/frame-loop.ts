@@ -14,7 +14,7 @@ export class FrameLoop<F extends FrameLoopCallback = FrameLoopCallback> {
 	 */
 	canceled: boolean = false
 
-	/** The original function to call after timeout. */
+	/** The original function to call in each loop. */
 	fn: F
 
 	/** Animation frame id, `null` represents it's not exist. */
@@ -22,6 +22,7 @@ export class FrameLoop<F extends FrameLoopCallback = FrameLoopCallback> {
 
 	private startTimestamp: number = 0
 
+	/** `fn` accepts a relative timestamp in milliseconds. */
 	constructor(fn: F) {
 		this.fn = fn
 	}
