@@ -86,6 +86,9 @@ export class PerFrameTransition<T extends TransitionAbleValue = any> extends Eve
 	/** Help to mix values. */
 	private mixer: Mixer<T> | null = null
 
+	/** A replaceable onprogress handler. */
+	private onprogress: ((value: T, progress: number) => void) | null = null
+
 	/** 
 	 * Start value.
 	 * Readonly outside.
@@ -103,9 +106,6 @@ export class PerFrameTransition<T extends TransitionAbleValue = any> extends Eve
 	 * Readonly outside.
 	 */
 	currentValue: T | null = null
-
-	/** A replaceable onprogress handler. */
-	onprogress: ((value: T, progress: number) => void) | null = null
 
 	/** 
 	 * Current transition progress, betweens `0~1`,
