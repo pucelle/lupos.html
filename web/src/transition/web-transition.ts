@@ -1,6 +1,6 @@
 import {getCSSEasingValue, WebTransitionEasingName} from './easing'
 import {PerFrameTransitionEvents, PerFrameTransitionOptions} from './per-frame-transition'
-import {EventFirer, promiseWithResolves} from 'lupos'
+import {EventFirer} from 'lupos'
 
 
 /** 
@@ -212,7 +212,7 @@ export class WebTransition extends EventFirer<WebTransitionEvents> {
 			}
 		)
 
-		let {promise, resolve} = promiseWithResolves<boolean>()
+		let {promise, resolve} = Promise.withResolvers<boolean>()
 		
 		this.promise = promise
 		this.resolve = resolve

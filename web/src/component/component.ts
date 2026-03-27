@@ -1,4 +1,4 @@
-import {ContextVariableConstructor, EventFirer, Observed, UpdateQueue, beginTrack, endTrack, Updatable, promisify, promiseWithResolves} from 'lupos'
+import {ContextVariableConstructor, EventFirer, Observed, UpdateQueue, beginTrack, endTrack, Updatable, promisify} from 'lupos'
 import {ComponentStyle} from './style'
 import {addElementComponentMap, getComponentByElement} from './from-element'
 import {TemplateSlot, SlotPosition, SlotPositionType, CompiledTemplateResult, SlotContentType} from '../template'
@@ -444,7 +444,7 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	 * ```
 	 */
 	untilChildComplete(): Promise<void> {
-		let {promise, resolve} = promiseWithResolves<void>()
+		let {promise, resolve} = Promise.withResolvers<void>()
 		this.whenChildComplete(resolve)
 		return promise
 	}

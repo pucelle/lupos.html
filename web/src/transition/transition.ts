@@ -1,4 +1,4 @@
-import {UpdateQueue, promiseWithResolves} from 'lupos'
+import {UpdateQueue} from 'lupos'
 import {PerFrameTransition, PerFrameTransitionOptions} from './per-frame-transition'
 import {WebTransition, WebTransitionKeyFrame, WebTransitionOptions} from './web-transition'
 
@@ -250,7 +250,7 @@ export class Transition {
 	/** Prepare for transition properties, and update mixed transition players. */
 	private async prepareTransitions(phase: 'enter' | 'leave', result: TransitionResult): Promise<boolean> {
 		let version = ++this.version
-		let {promise, resolve} = promiseWithResolves()
+		let {promise, resolve} = Promise.withResolvers<void>()
 
 		this.ready = promise.then(() => {
 			this.ready = null

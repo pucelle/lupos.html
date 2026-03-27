@@ -1,6 +1,6 @@
 import {EasingFunction, PerFrameTransitionEasingName, getEasingFunction} from './easing'
 import {makeMixer} from './mixer'
-import {EventFirer, promiseWithResolves} from 'lupos'
+import {EventFirer} from 'lupos'
 import {FrameLoop} from './frame-loop'
 import {Mixer, TransitionAbleValue} from './types'
 
@@ -243,7 +243,7 @@ export class PerFrameTransition<T extends TransitionAbleValue = any> extends Eve
 			this.fire('started')
 		}
 
-		let {promise, resolve} = promiseWithResolves<boolean>()
+		let {promise, resolve} = Promise.withResolvers<boolean>()
 
 		this.promise = promise
 		this.resolve = resolve
