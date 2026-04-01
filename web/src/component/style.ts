@@ -8,6 +8,7 @@ export type ComponentStyle = TemplateResult | (() => TemplateResult)
 
 interface NamedStyle {
 	name: string
+	type: 'static' | 'dynamic'
 	code: ComponentStyle | string
 }
 
@@ -20,7 +21,11 @@ class ToUpdateStyle implements Updatable {
 
 	/** Add a component style. */
 	add(name: string, style: ComponentStyle) {
-		this.styles.push({name, code: style})
+		this.styles.push({
+			name,
+			type: typeof style === 'function' ? 'dynamic' : 'static',
+			code: style
+		})
 
 		// When SSR, not enqueue.
 		if (this.styles.length === 1 && typeof requestAnimationFrame !== 'undefined') {
@@ -37,7 +42,7 @@ class ToUpdateStyle implements Updatable {
 		let scriptTag = document.head.querySelector('script')
 
 		for (let style of group) {
-			this.createStyleElement(style.name, style.code, scriptTag)
+			this.createStyleElement(style.name, style.type, style.code, scriptTag)
 		}
 
 		// In SSR env, not reset it for next time rendering.
@@ -48,18 +53,20 @@ class ToUpdateStyle implements Updatable {
 
 	private groupStyles() {
 		let group: NamedStyle[] = []
-		let latestStringGroup: {name: string, code: string} | null = null
+		let latestStringGroup: NamedStyle | null = null
 
 		for (let style of this.styles) {
-			if (typeof style === 'function') {
+			if (style.type === 'dynamic') {
 				group.push(style)
 			}
 			else {
 				if (!latestStringGroup) {
 					latestStringGroup = {
 						name: style.name,
+						type: 'static', 
 						code: String(style.code),
 					}
+
 					group.push(latestStringGroup)
 				}
 				else {
@@ -78,9 +85,10 @@ class ToUpdateStyle implements Updatable {
 	 * Always insert it into before any script tags.
 	 * So you may put overwritten styles after script tag to avoid conflict.
 	 */
-	private createStyleElement(identifyName: string, code: ComponentStyle | string, scriptTag: HTMLElement | null) {
+	private createStyleElement(identifyName: string, type: 'static' | 'dynamic', code: ComponentStyle | string, scriptTag: HTMLElement | null) {
 		let styleTag = document.createElement('style')
 		styleTag.setAttribute('name', identifyName)
+		styleTag.setAttribute('type', type)
 
 		if (typeof code === 'function') {
 			new Effector(() => {
@@ -109,6 +117,7 @@ export function addComponentStyle(style: ComponentStyle, identifyName: string): 
 	if (!toUpdateStyle) {
 		toUpdateStyle = new ToUpdateStyle()
 	}
+
 	toUpdateStyle.add(identifyName, style)
 	return style
 }
