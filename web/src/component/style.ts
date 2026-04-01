@@ -4,12 +4,12 @@ import {inSSR} from '../ssr'
 
 
 /** Type of the values returned from `Component.style()`. */
-export type ComponentStyle = TemplateResult | (() => TemplateResult)
+export type TemplateStyle = TemplateResult | (() => TemplateResult)
 
 interface NamedStyle {
 	name: string
 	type: 'static' | 'dynamic'
-	code: ComponentStyle | string
+	code: TemplateStyle | string
 }
 
 
@@ -20,7 +20,7 @@ class ToUpdateStyle implements Updatable {
 	private styles: NamedStyle[] = []
 
 	/** Add a component style. */
-	add(name: string, style: ComponentStyle) {
+	add(name: string, style: TemplateStyle) {
 		this.styles.push({
 			name,
 			type: typeof style === 'function' ? 'dynamic' : 'static',
@@ -85,9 +85,9 @@ class ToUpdateStyle implements Updatable {
 	 * Always insert it into before any script tags.
 	 * So you may put overwritten styles after script tag to avoid conflict.
 	 */
-	private createStyleElement(identifyName: string, type: 'static' | 'dynamic', code: ComponentStyle | string, scriptTag: HTMLElement | null) {
+	private createStyleElement(identifyName: string, type: 'static' | 'dynamic', code: TemplateStyle | string, scriptTag: HTMLElement | null) {
 		let styleTag = document.createElement('style')
-		styleTag.setAttribute('name', identifyName)
+		styleTag.setAttribute('coms', identifyName)
 		styleTag.setAttribute('type', type)
 
 		if (typeof code === 'function') {
@@ -113,7 +113,7 @@ let toUpdateStyle: ToUpdateStyle | null = null
  * It will be compiled to accept component declared style,
  * and returns the style as original static property.
  */
-export function addComponentStyle(style: ComponentStyle, identifyName: string): ComponentStyle {
+export function addComponentStyle(style: TemplateStyle, identifyName: string = 'global'): TemplateStyle {
 	if (!toUpdateStyle) {
 		toUpdateStyle = new ToUpdateStyle()
 	}
@@ -123,11 +123,21 @@ export function addComponentStyle(style: ComponentStyle, identifyName: string): 
 }
 
 
+/** Add a template style to document head as a style tag. */
+export function addStyle(style: TemplateStyle) {
+	if (!toUpdateStyle) {
+		toUpdateStyle = new ToUpdateStyle()
+	}
+
+	toUpdateStyle.add('anonymous', style)
+}
+
+
 /** 
  * Flush component styles to style tags.
  * Normally only for SSR rendering.
  */
-export function flushComponentStyles() {
+export function flushStyles() {
 	if (toUpdateStyle) {
 		toUpdateStyle.willUpdate()
 	}

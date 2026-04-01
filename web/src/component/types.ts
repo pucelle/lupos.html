@@ -1,11 +1,11 @@
 import {CompiledTemplateResult, SlotContentType, TemplateResult} from '../template'
 import {Component} from './component'
-import {ComponentStyle} from './style'
+import {TemplateStyle} from './style'
 
 
 /** Constructor of component. */
 export interface ComponentConstructor {
-	style: ComponentStyle | null
+	style: TemplateStyle | null
 	SlotContentType: SlotContentType | null
 	new(el?: HTMLElement): Component
 }

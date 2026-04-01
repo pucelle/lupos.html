@@ -1,5 +1,5 @@
 import {ContextVariableConstructor, EventFirer, Observed, UpdateQueue, beginTrack, endTrack, Updatable, promisify} from 'lupos'
-import {ComponentStyle} from './style'
+import {TemplateStyle} from './style'
 import {addElementComponentMap, getComponentByElement} from './from-element'
 import {TemplateSlot, SlotPosition, SlotPositionType, CompiledTemplateResult, SlotContentType} from '../template'
 import {ComponentConstructor, RenderResult} from './types'
@@ -154,7 +154,7 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	 * Provides a global css content, used as styles for current component.
 	 * Although it supports dynamic css content, we would suggest using only static css content.
 	 */
-	static style: ComponentStyle | null = null
+	static style: TemplateStyle | null = null
 
 	/** Compiler will add this property after analysis render result. */
 	static SlotContentType: SlotContentType | null = null
