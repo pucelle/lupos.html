@@ -1,6 +1,6 @@
 import {UpdateQueue} from 'lupos'
 import * as linkedom from 'linkedom'
-import {connectCustomElement, flushComponentStyles, render, RenderResult, resetInSSR} from '../../web/out'
+import {connectCustomElement, flushStyles, render, RenderResult, resetInSSR} from '../../web/out'
 
 
 /** 
@@ -19,7 +19,7 @@ export class SSR {
 		this.document = this.window.document
 
 		// Flush styles after context initialized.
-		flushComponentStyles()
+		flushStyles()
 
 		// Set `inSSR` to `true`.
 		resetInSSR(true)

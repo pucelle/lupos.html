@@ -129,6 +129,13 @@ export class Checkbox extends Component {
 
 
 
+## SSR
+
+Use `SSR` import from `lupos.html/ssr` to do server side rendering.
+Note you may need to set `"moduleResolution": "Bundler"` in `tsconfig.json`.
+
+
+
 ## License
 
 MIT
