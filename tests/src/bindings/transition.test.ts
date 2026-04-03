@@ -1,4 +1,4 @@
-import {DOMEvents, promiseWithResolves, UpdateQueue} from 'lupos'
+import {DOMEvents, UpdateQueue} from 'lupos'
 import * as lupos from '../../../web/out'
 import {describe, it, expect, vi} from 'vitest'
 
@@ -208,7 +208,7 @@ describe('Test :transition', () => {
 
 /** Returns a promise which will be resolved after counting timeout for `ms` milliseconds. */
 function sleep(ms: number = 0) {
-	let {promise, resolve} = promiseWithResolves()
+	let {promise, resolve} = Promise.withResolvers()
 	setTimeout(resolve, ms)
 	
 	return promise

@@ -4,12 +4,12 @@ import path from 'node:path'
 
 export default defineConfig({
 	test: {
-		//environment: 'happy-dom',
+		environment: 'happy-dom',
 		include: ['tests/out/**/*.test.js'],
 	},
 	resolve: {
 		alias: {
-			'@pucelle/lupos.js': path.resolve(__dirname, './web/out'),
+			'lupos.html': path.resolve(__dirname, './web/out'),
 		},
 	},
 })
