@@ -25,7 +25,8 @@
 	"sideEffects": false,
 	"scripts": {
 		"build": "cd web && luc -e && cd ../ssr && luc -e",
-		"watch": "cd web && luc -e -w",
+		"watch-web": "cd web && luc -e -w",
+		"watch-ssr": "cd ssr && luc -e -w",
 		"prepublish": "npm run build",
 		"build-test": "cd tests && luc -e",
 		"watch-test": "cd tests && luc -e -w",
