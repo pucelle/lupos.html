@@ -29,7 +29,7 @@ export class SSR {
 		let parseHTML = linkedom.parseHTML as any
 
 		let {window: win} = parseHTML('<!DOCTYPE html><html><head></head><body></body></html>', {
-			location: {href: 'https://lupos.html' + this.path}
+			location: new URL('https://lupos.html' + this.path)
 		})
 
 		let global = globalThis as any
@@ -54,7 +54,10 @@ export class SSR {
 		global.Node = win.Node
 
 		global.requestAnimationFrame = function(callback: (timestamp: number) => void) {
-			callback(0)
+
+			// Note here can't call callback immediately before returning.
+			Promise.resolve().then(() => callback(0))
+			
 			return 0
 		}
 
