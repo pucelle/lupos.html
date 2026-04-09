@@ -29,7 +29,7 @@ export class KeyedBlock {
 			template = this.template
 		}
 		else if (result) {
-			template = result.maker.make(result.context)
+			template = this.slot.makeTemplate(result.maker, result.context)
 		}
 
 		this.slot.updateExternalTemplate(template, result ? result.values : [])
@@ -69,7 +69,7 @@ export class CacheableKeyedBlock {
 			template = this.template
 		}
 		else if (result) {
-			template = this.templates.get(newKey) ?? result.maker.make(result.context)
+			template = this.templates.get(newKey) ?? this.slot.makeTemplate(result.maker, result.context)
 		}
 
 		this.slot.updateExternalTemplate(template, result ? result.values : [])
@@ -113,7 +113,7 @@ export class WeakCacheableKeyedBlock {
 			template = this.template
 		}
 		else if (newKey && result) {
-			template = this.templates.get(newKey) ?? result.maker.make(result.context)
+			template = this.templates.get(newKey) ?? this.slot.makeTemplate(result.maker, result.context)
 		}
 
 		this.slot.updateExternalTemplate(template, result ? result.values : [])

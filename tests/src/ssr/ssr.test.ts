@@ -1,24 +1,24 @@
-import * as lupos from '../../../web/out'
+import {css, Component, html, defineCustomElement, RenderResult} from '../../../web/out'
 import {SSR} from '../../../ssr/out'
 import {describe, it, expect} from 'vitest'
 
 
-class SSRTest extends lupos.Component {
+class SSRTest extends Component {
 
-	static style = lupos.css`.ssr-test{color: red}`
+	static style = css`.ssr-test{color: red}`
 
-	protected render(): lupos.RenderResult {
-		return lupos.html`<template class="ssr-test">SSR</template>`
+	protected render(): RenderResult {
+		return html`<template class="ssr-test">SSR</template>`
 	}
 }
 
-lupos.defineCustomElement('ssr-test', SSRTest)
+defineCustomElement('ssr-test', SSRTest)
 
 
 describe('SSR', () => {
 	it('ssr component', async () => {
 		let ssr = new SSR('/')
-		let rendered = await ssr.renderToString(lupos.html`<SSRTest>`)
+		let rendered = await ssr.renderToString(html`<SSRTest>`)
 		expect(rendered).toBe('<div class="ssr-test">SSR</div>')
 		expect(await ssr.toString()).toBe('<!DOCTYPE html><html><head><style name="SSRTest">.ssr-test{color: red}</style></head><body></body></html>')
 	})

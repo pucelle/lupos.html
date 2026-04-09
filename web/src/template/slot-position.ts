@@ -23,11 +23,11 @@ export type SlotEndOuterPositionType = SlotPositionType.Before | SlotPositionTyp
 export class SlotPosition<T = SlotPositionType> {
 
 	type: T
-	target: Element | ChildNode
+	marker: Element | ChildNode
 
 	constructor(type: T, target: Element | ChildNode) {
 		this.type = type
-		this.target = target
+		this.marker = target
 	}
 	
 	/** 
@@ -36,7 +36,7 @@ export class SlotPosition<T = SlotPositionType> {
 	 */
 	getStartNode(): ChildNode | null {
 		if (this.type === SlotPositionType.Before) {
-			return (this.target as ChildNode)
+			return (this.marker as ChildNode)
 		}
 		else {
 			return null
@@ -46,11 +46,11 @@ export class SlotPosition<T = SlotPositionType> {
 	/** Insert nodes before current position. */
 	insertNodesBefore(...newNodes: ChildNode[]) {
 		if (this.type === SlotPositionType.Before) {
-			let node = this.target as ChildNode
+			let node = this.marker as ChildNode
 			node.before(...newNodes)
 		}
 		else {
-			let parent = this.target as Element
+			let parent = this.marker as Element
 			parent.append(...newNodes)
 		}
 	}
@@ -61,7 +61,7 @@ export class SlotPosition<T = SlotPositionType> {
 		let node: ChildNode | null = from
 
 		if (this.type === SlotPositionType.Before) {
-			untilBeforeNode = this.target as ChildNode
+			untilBeforeNode = this.marker as ChildNode
 		}
 		else {
 			untilBeforeNode = null

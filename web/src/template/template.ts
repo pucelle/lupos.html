@@ -95,10 +95,10 @@ export class Template<A extends any[] = any[]> implements Part {
 	 */
 	getFirstNode(): ChildNode | null {
 		if (this.startInnerPosition.type === SlotPositionType.Before) {
-			return this.startInnerPosition.target as ChildNode
+			return this.startInnerPosition.marker as ChildNode
 		}
 		else {
-			return this.startInnerPosition.target as Element
+			return this.startInnerPosition.marker as Element
 		}
 	}
 
@@ -109,6 +109,14 @@ export class Template<A extends any[] = any[]> implements Part {
 	 */
 	insertNodesBefore(position: SlotPosition) {
 		position.insertNodesBefore(...this.el.content.childNodes)
+		PositionMap.addPosition(this, position)
+	}
+
+	/** 
+	 * When hydrating nodes of current template before a position,
+	 * and map template with position.
+	 */
+	hydrateNodesBefore(position: SlotPosition) {
 		PositionMap.addPosition(this, position)
 	}
 

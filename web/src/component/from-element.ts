@@ -4,6 +4,10 @@ import type {Component} from './component'
 /** To cache `element -> component` map. */
 const ElementComponentMap: WeakMap<Element, Component> = /*#__PURE__*/new WeakMap()
 
+/** To cache elements for components which will be hydrated. */
+const WillHydrateSet: WeakSet<Element> = /*#__PURE__*/new WeakSet()
+
+
 
 /** Add an `element -> component` map after component created. */
 export function addElementComponentMap(el: Element, com: Component) {
@@ -17,7 +21,21 @@ export function getComponentByElement(el: Element): Component | undefined {
 }
 
 
-/** Check whether an component associated with specified element. */
-export function hasComponentForElement(el: Element): boolean {
-	return ElementComponentMap.has(el)
+/** Element related component will be hydrated later. */
+export function willHydrate(el: Element) {
+	WillHydrateSet.add(el)
+}
+
+
+/** 
+ * Check whether an elements need to be hydrated.
+ * After visited, element will be cleared.
+ */
+export function needsHydrateOnce(el: Element): boolean {
+	let needs = WillHydrateSet.has(el)
+	if (needs) {
+		WillHydrateSet.delete(el)
+	}
+
+	return needs
 }

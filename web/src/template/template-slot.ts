@@ -3,6 +3,7 @@ import {Template} from './template'
 import {CompiledTemplateResult} from './template-result-compiled'
 import {Part, PartCallbackParameterMask} from '../part'
 import {NodeTemplateMaker, TextTemplateMaker} from './template-makers'
+import {TemplateMaker} from './template-maker'
 
 
 /** 
@@ -22,7 +23,7 @@ export const enum SlotContentType {
  * it helps to update content of the slot.
  * Must know the content type of slot, otherwise use `DynamicTypedTemplateSlot`.
  */
-export class TemplateSlot<T extends SlotContentType | null = SlotContentType> implements Part {
+export class TemplateSlot<T extends SlotContentType | null = SlotContentType | null> implements Part {
 
 	/** 
 	 * Indicates whether connected to document.
@@ -35,15 +36,30 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType> im
 
 	private contentType: T | null = null
 	private readonly knownContentType: boolean
+
+	private hydrateNodes: ArrayLike<ChildNode> | undefined
 	private content: Template | Template[] | null = null
 
 	constructor(
 		endOuterPosition: SlotPosition<SlotEndOuterPositionType>,
-		knownType: T | null = null
+		knownType: T | null = null,
+		hydrateNodes: ArrayLike<ChildNode> | undefined = undefined
 	) {
 		this.endOuterPosition = endOuterPosition
 		this.contentType = knownType as T
 		this.knownContentType = knownType !== null
+		this.hydrateNodes = hydrateNodes
+	}
+
+	/** Make a template, and use current hydrate nodes if possible. */
+	makeTemplate(maker: TemplateMaker, context: any): Template {
+		let template = maker.make(context, this.hydrateNodes)
+
+		if (this.hydrateNodes) {
+			this.hydrateNodes = undefined
+		}
+
+		return template
 	}
 
 	afterConnectCallback(param: PartCallbackParameterMask | 0) {
@@ -113,7 +129,10 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType> im
 			this.contentType = newContentType
 		}
 
-		if (this.contentType === SlotContentType.TemplateResult) {
+		if (this.hydrateNodes) {
+			this.hydrate(value)
+		}
+		else if (this.contentType === SlotContentType.TemplateResult) {
 			this.updateTemplateResult(value as CompiledTemplateResult)
 		}
 		else if (this.contentType === SlotContentType.TemplateResultList) {
@@ -126,7 +145,28 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType> im
 			this.updateNode(value as ChildNode)
 		}
 	}
-	
+
+	/** 
+	 * Hydrate by value parameter after known it's type.
+	 * Note value must be strictly of the content type specified.
+	 */
+	hydrate(value: unknown) {
+		if (this.contentType === SlotContentType.TemplateResult) {
+			this.hydrateTemplateResult(value as CompiledTemplateResult)
+		}
+		else if (this.contentType === SlotContentType.TemplateResultList) {
+			this.hydrateTemplateResultList(value as CompiledTemplateResult[])
+		}
+		else if (this.contentType === SlotContentType.Text) {
+			this.hydrateText(value)
+		}
+		else if (this.contentType === SlotContentType.Node) {
+			this.hydrateNode(value as ChildNode)
+		}
+
+		this.hydrateNodes = undefined
+	}
+
 	/** Identify content type by value. */
 	private identifyContentType(value: unknown): T | null {
 		if (value === null || value === undefined) {
@@ -194,6 +234,19 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType> im
 		}
 	}
 
+	/** Hydrate from a template result. */
+	private hydrateTemplateResult(tr: CompiledTemplateResult) {
+		let newT = tr.maker.make(tr.context, this.hydrateNodes!)
+		newT.hydrateNodesBefore(this.endOuterPosition)
+		newT.update(tr.values)
+
+		if (this.connected) {
+			newT.afterConnectCallback(PartCallbackParameterMask.FromOwnStateChange | PartCallbackParameterMask.AsDirectNode)
+		}
+		
+		this.content = newT
+	}
+
 	/** Update from a template result list. */
 	private updateTemplateResultList(trs: CompiledTemplateResult[]) {
 		let content = this.content as Template[] | null
@@ -239,7 +292,111 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType> im
 		}
 	}
 
-	/** Insert a template before another one. */
+	/** Update from a template result list. */
+	private hydrateTemplateResultList(trs: CompiledTemplateResult[]) {
+		let content: Template[] = []
+		let template: Template | null = null
+		let fromIndex = 0
+
+		// Update shared part.
+		for (let i = 0; i < trs.length; i++) {
+			let tr = trs[i]
+			
+			// Generate a empty template, then reuse it.
+			if (!template || !template.canUpdateBy(tr)) {
+				template = tr.maker.make(tr.values)
+			}
+
+			let {nodes, endIndex} = this.splitHydrateNodes(this.hydrateNodes!, fromIndex, template)
+			let newT = tr.maker.make(tr.context, nodes)
+
+			if (nodes) {
+				newT.hydrateNodesBefore(this.endOuterPosition)
+			}
+			else {
+				this.insertTemplate(newT, null)
+			}
+
+			newT.update(tr.values)
+
+			if (this.connected) {
+				newT.afterConnectCallback(PartCallbackParameterMask.FromOwnStateChange | PartCallbackParameterMask.AsDirectNode)
+			}
+
+			fromIndex = endIndex
+			content[i] = newT
+		}
+
+		// Remove rest part.
+		if (fromIndex < this.hydrateNodes!.length) {
+			for (let i = this.hydrateNodes!.length - 1; i >= fromIndex; i--) {
+				this.hydrateNodes![i].remove()
+			}
+		}
+
+		this.content = content
+	}
+
+	private splitHydrateNodes(hydrateNodes: ArrayLike<ChildNode>, fromIndex: number, template: Template): 
+		{nodes: ChildNode[] | undefined, endIndex: number}
+	{
+		let hIndex = fromIndex
+		let templateNodes = template.el.content.childNodes
+
+		for (let tIndex = 0; tIndex < templateNodes.length; tIndex++) {
+			let tNode = templateNodes[tIndex]
+			let hNode = hIndex < hydrateNodes.length ? hydrateNodes[hIndex] : null
+			let hNodeMismatch = true
+
+			if (!hNode) {
+				break
+			}
+
+			if (tNode.nodeType === Node.ELEMENT_NODE) {
+				hNodeMismatch = hNode.nodeType !== Node.ELEMENT_NODE
+					|| (hNode as Element).localName !== (tNode as Element).localName
+			}
+			else if (tNode.nodeType === Node.COMMENT_NODE) {
+				let commentId = tNode.textContent!
+
+				hNodeMismatch = hNode.nodeType !== Node.COMMENT_NODE
+					|| hNode.textContent !== commentId
+
+				// Search for the match comment marker.
+				if (hNodeMismatch) {
+					for (let i = hIndex + 1; i < hydrateNodes.length; i++) {
+						let n = hydrateNodes[i]
+						if (n.nodeType === Node.COMMENT_NODE
+							&& n.textContent === commentId
+						) {
+							hIndex = i
+							hNode = n
+							hNodeMismatch = false
+							break
+						}
+					}
+				}
+			}
+			else if (tNode.nodeType === Node.TEXT_NODE) {
+				hNodeMismatch = hNode.nodeType !== Node.TEXT_NODE
+			}
+
+			// Eat this node whether match or not.
+			hIndex++
+
+			// Missing match, exit.
+			if (hNodeMismatch) {
+				break
+			}
+		}
+
+		return {
+			nodes: hIndex === fromIndex ? undefined : Array.prototype.slice.call(hydrateNodes, fromIndex, hIndex),
+			endIndex: hIndex,
+		}
+	}
+
+	/** Insert a template before another one, or before slot end position. */
 	private insertTemplate(t: Template, nextT: Template | null) {
 		let position = nextT?.startInnerPosition ?? this.endOuterPosition
 		t.insertNodesBefore(position)
@@ -256,11 +413,23 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType> im
 		let t = this.content as Template<[string]> | null
 
 		if (!t) {
-			t = this.content = TextTemplateMaker.make(null)
+			t = TextTemplateMaker.make(null)
 			t.insertNodesBefore(this.endOuterPosition)
 		}
 
 		t.update([text])
+		this.content = t as Template<string[]>
+	}
+
+	/** Hydrate from a text-like value. */
+	private hydrateText(value: unknown) {
+		let text = value === null || value === undefined ? '' : String(value).trim()
+		let t = TextTemplateMaker.make(null, this.hydrateNodes!) as Template<string[]>
+
+		t.hydrateNodesBefore(this.endOuterPosition)
+		t.update([text])
+
+		this.content = t
 	}
 
 	/** Update from a node. */
@@ -280,6 +449,15 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType> im
 				t.update([])
 			}
 		}
+	}
+
+	/** Hydrate from a node. */
+	private hydrateNode(node: ChildNode | null) {
+		for (let i = this.hydrateNodes!.length - 1; i >= 0; i--) {
+			this.hydrateNodes![i].remove()
+		}
+		
+		this.updateNode(node)
 	}
 
 	/** 

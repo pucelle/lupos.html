@@ -14,13 +14,13 @@ const CommentMaker = /*#__PURE__*/new HTMLMaker('<!---->')
 
 
 /** Template maker to create a text node to update text content. */
-export const TextTemplateMaker = /*#__PURE__*/new TemplateMaker(function() {
-	let el = TextMaker.make()
-	let textNode = el.content.firstChild as Text
+export const TextTemplateMaker = /*#__PURE__*/new TemplateMaker(function(_$context, $hydrates) {
+	let locator = TextMaker.make($hydrates)
+	let textNode = locator.childAt(0) as Text
 	let position = new SlotPosition<SlotStartInnerPositionType>(SlotPositionType.Before, textNode)
 
 	return {
-		el,
+		el: locator.el,
 		position,
 		update([text]: [string]) {
 			textNode.data = text
@@ -35,14 +35,14 @@ export const TextTemplateMaker = /*#__PURE__*/new TemplateMaker(function() {
  * so can't automatically call their connect and disconnect callbacks.
  * Fit for containing nodes which have been registered as parts, like slot elements.
  */
-export const NodeTemplateMaker = /*#__PURE__*/new TemplateMaker(function() {
-	let el = CommentMaker.make()
-	let comment = el.content.firstChild as Comment
+export const NodeTemplateMaker = /*#__PURE__*/new TemplateMaker(function(_$context, $hydrates) {
+	let locator = CommentMaker.make($hydrates)
+	let comment = locator.childAt(0) as Comment
 	let startInnerPosition = new SlotPosition<SlotStartInnerPositionType>(SlotPositionType.Before, comment)
 	let lastNode: ChildNode | null = null
 
 	return {
-		el,
+		el: locator.el,
 		position: startInnerPosition,
 		update([node]: [ChildNode | null]) {
 			if (node === lastNode) {

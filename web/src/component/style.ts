@@ -88,7 +88,7 @@ class ToUpdateStyle implements Updatable {
 	private createStyleElement(identifyName: string, type: 'static' | 'dynamic', code: TemplateStyle | string, scriptTag: HTMLElement | null) {
 		let styleTag = document.createElement('style')
 		styleTag.setAttribute('coms', identifyName)
-		styleTag.setAttribute('type', type)
+		styleTag.setAttribute('mode', type)
 
 		if (typeof code === 'function') {
 			new Effector(() => {

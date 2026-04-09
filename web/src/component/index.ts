@@ -1,5 +1,6 @@
 export * from './component'
 export * from './custom-element'
+export {willHydrate} from './from-element'
 export * from './render'
 export * from './fragmented'
 export * from './types'

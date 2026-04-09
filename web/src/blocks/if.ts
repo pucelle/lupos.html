@@ -45,7 +45,7 @@ export class CacheableIfBlock {
 		let template = result ? this.templates.get(result.maker) ?? null : null
 		
 		if (!template && result) {
-			template = result.maker.make(result.context)
+			template = this.slot.makeTemplate(result.maker, result.context)
 			this.templates.set(result.maker, template)
 		}
 

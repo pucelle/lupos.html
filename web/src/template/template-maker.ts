@@ -4,7 +4,7 @@ import {Part, PartPositionType} from '../part'
 
 
 /** Compiler compile a html`<div>...` to a `TemplateMaker(TemplateInitFn)`. */
-export type TemplateInitFn = (context: any) => TemplateInitResult
+export type TemplateInitFN = (context: any, hydrateNodes: ArrayLike<ChildNode> | undefined) => TemplateInitResult
 
 /** Part of contents compiled from a template literal. */
 export interface TemplateInitResult {
@@ -32,14 +32,14 @@ export interface TemplateInitResult {
 /** Compile from any html`...`. */
 export class TemplateMaker {
 
-	private init: TemplateInitFn
+	private init: TemplateInitFN
 
-	constructor(init: TemplateInitFn) {
+	constructor(init: TemplateInitFN) {
 		this.init = init
 	}
 
 	/** Bind with a context to create a Template. */
-	make(context: any): Template {
-		return new Template(this.init(context), this, context)
+	make(context: any, hydrateNodes?: ArrayLike<ChildNode>): Template {
+		return new Template(this.init(context, hydrateNodes), this, context)
 	}
 }

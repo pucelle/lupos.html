@@ -1,6 +1,6 @@
 import {ContextVariableConstructor, EventFirer, Observed, UpdateQueue, beginTrack, endTrack, Updatable, promisify} from 'lupos'
 import {TemplateStyle} from './style'
-import {addElementComponentMap, getComponentByElement} from './from-element'
+import {addElementComponentMap, getComponentByElement, needsHydrateOnce} from './from-element'
 import {TemplateSlot, SlotPosition, SlotPositionType, CompiledTemplateResult, SlotContentType} from '../template'
 import {ComponentConstructor, RenderResult} from './types'
 import {getComponentSlotParameter, Part, PartCallbackParameterMask} from '../part'
@@ -47,10 +47,10 @@ let IncrementalId = 1
 
 /** Components state. */
 const enum ComponentStateMask {
-	Created = 2 ** 0,
-	ReadyAlready = 2 ** 1,
-	Connected = 2 ** 2,
-	WillCallConnectCallback = 2 ** 3,
+	Created = 1 << 1,
+	ReadyAlready = 1 << 2,
+	Connected = 1 << 3,
+	WillCallConnectCallback = 1 << 4,
 }
 
 
@@ -211,7 +211,7 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 		// Component create earlier, update earlier.
 		UpdateQueue.enqueue(this)
 	}
-	
+
 	/** 
 	 * Doing update immediately.
 	 * Can be an async function, and can call `untilChildUpdateComplete`
@@ -261,8 +261,13 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	protected initContentSlot(): TemplateSlot {
 		let position = new SlotPosition<SlotPositionType.AfterContent>(SlotPositionType.AfterContent, this.el)
 		let Com = this.constructor as ComponentConstructor
+		let hydrateNodes: ArrayLike<ChildNode> | undefined = undefined
+		
+		if (needsHydrateOnce(this.el)) {
+			hydrateNodes = this.el.childNodes
+		}
 
-		return new TemplateSlot(position, Com.SlotContentType!)
+		return new TemplateSlot(position, Com.SlotContentType, hydrateNodes)
 	}
 	
 	/**
@@ -424,7 +429,7 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	 * and all descendants update completed.
 	 * 
 	 * Use it when you need to wait for child and descendant components
-	 * update completed and do some measurement.
+	 * update completed and do some measurement and update again.
 	 * 
 	 * ```ts
 	 * async update() {
@@ -673,7 +678,9 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 
 	/** 
 	 * Connect current component manually even it's not in document,
-	 * and also wait for component get updated.
+	 * and also wait for component to get updated.
+	 * Note that element not truly in document recently, so measuring not working.
+	 * 
 	 * Skip and return `true` if already connected.
 	 * Returns false if get disconnected before updated.
 	 */
