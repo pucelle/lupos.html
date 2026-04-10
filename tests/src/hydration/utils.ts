@@ -22,22 +22,31 @@ class NodesCloner {
 	}
 
 	compare() {
-		return this.compareRecursive(this.el, this.cache)
+		return this.compareRecursively(this.el, this.cache)
 	}
 
-	private compareRecursive(node: Node, cached: NodeCache) {
+	private compareRecursively(node: Node, cached: NodeCache) {
 		if (node !== cached.node) {
 			throw new Error('Node mismatch:\n' + node.toString() + '\n' + cached.node.toString())
 		}
 
 		let currentChildren = node.childNodes
 		if (currentChildren.length !== cached.childNodes.length) {
-			throw new Error('Child length mismatch:\n' + [...node.childNodes].map(c => c.toString()).join('') + '\n' + cached.childNodes.map(c => c.node.toString()).join(''))
+			throw new Error('Child length mismatch:\n' + [...node.childNodes].map(this.outputChildNode).join(' | ')
+				+ '\n' + cached.childNodes.map(c => this.outputChildNode(c.node)).join(' | '))
 		}
 
 		for (let i = 0; i < currentChildren.length; i++) {
-			this.compareRecursive(currentChildren[i], cached.childNodes[i])
+			this.compareRecursively(currentChildren[i], cached.childNodes[i])
 		}
+	}
+
+	private outputChildNode(node: Node) {
+		if (node.nodeType === Node.COMMENT_NODE) {
+			return `<!--${node.textContent ?? ''}-->`
+		}
+
+		return node.toString()
 	}
 }
 

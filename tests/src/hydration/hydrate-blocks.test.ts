@@ -312,7 +312,7 @@ describe('Hydration for dynamic component', () => {
 			protected render() {
 				return html`
 					<${this.ChildCom} :class="${'className'}">
-						Child Component Content
+						child component content
 					</>
 				`
 			}
@@ -334,11 +334,11 @@ describe('Hydration for dynamic component', () => {
 		compare()
 
 		expect(Child1.from(parent.el.firstElementChild!)!).toBeInstanceOf(Child1)
-		expect(parent.el.textContent).toBe('Child Component Content')
+		expect(parent.el.textContent).toBe('child component content')
 
 		parent.ChildCom = Child2
 		await UpdateQueue.untilAllComplete()
 		expect(Child2.from(parent.el.firstElementChild!)).toBeInstanceOf(Child2)
-		expect(parent.el.textContent).toBe('Child Component Content')
+		expect(parent.el.textContent).toBe('child component content')
 	})
 })

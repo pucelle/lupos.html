@@ -182,12 +182,6 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	 */
 	protected $restSlotRange: SlotRange | null = null
 
-	/**
-	 * Caches slot elements which are marked as `<... slot="slotName">`.
-	 * You should re-define the detailed type like `{name1: Element, ...}` in derived components.
-	 */
-	protected slotElements: Record<string, Element | null> = {}
-
 	constructor(el: HTMLElement = document.createElement('div')) {
 		super()
 		this.el = el
@@ -460,26 +454,7 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	 * For internal usage only.
 	 */
 	$transferSlotContents(toCom: Component) {
-		toCom.slotElements = this.slotElements
 		toCom.$restSlotRange = this.$restSlotRange
-	}
-
-	/** 
-	 * For `:slot=slotName` binding to apply slot elements,
-	 * which may be used later to fill `<slot name=slotName>` inside current component context.
-	 * For internal usage only.
-	 */
-	$setSlotElement(slotName: string, el: Element | null) {
-		this.slotElements[slotName] = el
-	}
-
-	/** 
-	 * Get element by specified slot name,
-	 * and use it to fill `<slot name=slotName>` inside current component context.
-	 * For internal usage only, and be called by compiled codes.
-	 */
-	$getSlotElement(slotName: string): Element | null {
-		return this.slotElements[slotName]
 	}
 
 	/** 

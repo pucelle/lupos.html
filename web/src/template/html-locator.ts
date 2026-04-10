@@ -96,15 +96,16 @@ export class HydrateHTMLLocator {
 					this.walkForMarkers(newHNode)
 
 					hNode!.replaceWith(newHNode)
-					latestHNode = newHNode
-					hIndex++
+					hNode = newHNode
 				}
 				else {
-					latestHNode = hNode
-					hIndex++
-
 					if ((tNode as Element).hasAttribute('com')) {
 						willHydrate(hNode as Element)
+
+						// Patch rest slot nodes.
+						if (tNode.childNodes.length > 0) {
+							
+						}
 					}
 					else {
 						this.patchNodesRecursively(tNode.childNodes, hNode.childNodes)
@@ -112,25 +113,19 @@ export class HydrateHTMLLocator {
 				}
 			}
 			else if (tNode.nodeType === Node.COMMENT_NODE) {
-				let commentId = tNode.textContent!
+				let markerId = tNode.textContent!
 
 				let hNodeMismatch = hNode.nodeType !== Node.COMMENT_NODE
-					|| hNode.textContent !== commentId
+					|| hNode.textContent !== markerId
 
-				// Search for the match comment marker.
+				// Search for the comment marker by id.
 				if (hNodeMismatch) {
-					for (let i = hIndex + 1; i < hydrateNodes.length; i++) {
-						let n = hydrateNodes[i]
-						if (n.nodeType === Node.COMMENT_NODE
-							&& n.textContent === commentId
-						) {
-							let rangedNodes: ChildNode[] = Array.prototype.slice.call(hydrateNodes, hIndex, i)
-							this.rangedNodesMap.set(commentId, rangedNodes)
-							hIndex = i
-							hNode = n
-							hNodeMismatch = false
-							break
-						}
+					let markerIndex = this.scanForMarker(markerId, hIndex, hydrateNodes)
+					if (markerIndex !== -1) {
+						hIndex = markerIndex
+						hNode = hydrateNodes[markerIndex]
+						hNodeMismatch = false
+						break
 					}
 				}
 
@@ -138,17 +133,11 @@ export class HydrateHTMLLocator {
 				if (hNodeMismatch) {
 					let newHNode = tNode.cloneNode(true) as ChildNode
 					hNode!.replaceWith(newHNode)
-
-					latestHNode = newHNode
-					hIndex++
-				}
-				else {
-					latestHNode = hNode
-					hIndex++
+					hNode = newHNode
 				}
 
-				if (commentId) {
-					this.markerMap.set(commentId, latestHNode as Comment)
+				if (markerId) {
+					this.markerMap.set(markerId, hNode as Comment)
 				}
 			}
 			else if (tNode.nodeType === Node.TEXT_NODE) {
@@ -158,15 +147,12 @@ export class HydrateHTMLLocator {
 				if (hNodeMismatch) {
 					let newHNode = tNode.cloneNode(true) as ChildNode
 					hNode!.replaceWith(newHNode)
-
-					latestHNode = newHNode
-					hIndex++
-				}
-				else {
-					latestHNode = hNode
-					hIndex++
+					hNode = newHNode
 				}
 			}
+
+			latestHNode = hNode
+			hIndex++
 		}
 
 		// Removes redundant nodes.
@@ -175,6 +161,23 @@ export class HydrateHTMLLocator {
 				hydrateNodes[i].remove()
 			}
 		}
+	}
+
+	/** Scan for specified id marker. */
+	private scanForMarker(markerId: string, hIndex: number, hydrateNodes: ArrayLike<ChildNode>): number {
+		for (let i = hIndex + 1; i < hydrateNodes.length; i++) {
+			let node = hydrateNodes[i]
+			if (node.nodeType === Node.COMMENT_NODE
+				&& node.textContent === markerId
+			) {
+				let rangedNodes: ChildNode[] = Array.prototype.slice.call(hydrateNodes, hIndex, i)
+				this.rangedNodesMap.set(markerId, rangedNodes)
+				
+				return i
+			}
+		}
+
+		return -1
 	}
 
 	private walkForMarkers(node: Node) {

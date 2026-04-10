@@ -58,7 +58,6 @@ export class Checkbox extends Component {
 	- `:crossFadePair` bind an element to provide bounding rect for later crossfade transition.
 	- `:html`: update `innerHTML` property of current element to codes.
 	- `:ref`: ref an element or a component as property, or as parameter to call a callback.
-	- `:slot`: bind element as a slot element, later it may replace same named `<slot name=...>`.
 	- `:style`: bind element style properties.
 	- `:transition`: bind enter and leave transition.
 	- `class newBinding implements Binding {...}`: to declare a new binding.
