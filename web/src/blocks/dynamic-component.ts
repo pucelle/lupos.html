@@ -22,17 +22,15 @@ export class DynamicComponentBlock {
 	readonly slot: TemplateSlot
 	readonly contentRange: SlotRange | null
 
-	private willHydrate: boolean
 	private originalEl: HTMLElement | undefined
 	private Com: ComponentConstructor | null = null
 	private com: Component | null = null
 
-	constructor(binder: DynamicComponentBinder, originalEl: HTMLElement, slot: TemplateSlot, contentRange: SlotRange | null, willHydrate: boolean) {
+	constructor(binder: DynamicComponentBinder, originalEl: HTMLElement, slot: TemplateSlot, contentRange: SlotRange | null) {
 		this.binder = binder
 		this.originalEl = originalEl
 		this.slot = slot
 		this.contentRange = contentRange
-		this.willHydrate = willHydrate
 	}
 
 	/** Update with new Component Constructor. */
@@ -41,12 +39,7 @@ export class DynamicComponentBlock {
 			return
 		}
 
-		let com = new NewCom(this.originalEl, this.willHydrate)
-		
-		if (this.willHydrate) {
-			this.willHydrate = false
-		}
-
+		let com = new NewCom(this.originalEl)
 		this.binder(com)
 
 		if (this.com) {

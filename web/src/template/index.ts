@@ -1,4 +1,5 @@
 export * from './html-maker'
+export * from './hydration-splitter'
 export * from './slot-position'
 export * from './slot-range'
 export * from './template'

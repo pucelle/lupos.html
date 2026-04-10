@@ -7,7 +7,7 @@ describe('Test Keyed Block', () => {
 	it('Keyed Block', async () => {
 		let render = (value: number) => {
 			return lupos.html`
-				<lu:keyed ${value}><div>${value}</div></lu:if>
+				<lu:keyed ${value}><div>${value}</div></lu:keyed>
 			`
 		}
 

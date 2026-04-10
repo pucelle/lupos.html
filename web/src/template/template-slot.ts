@@ -4,6 +4,7 @@ import {CompiledTemplateResult} from './template-result-compiled'
 import {Part, PartCallbackParameterMask} from '../part'
 import {NodeTemplateMaker, TextTemplateMaker} from './template-makers'
 import {TemplateMaker} from './template-maker'
+import {HydrateNodesSplitter} from './hydration-splitter'
 
 
 /** 
@@ -60,6 +61,17 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 		}
 
 		return template
+	}
+
+	/** If have hydrate nodes, take control of it. */
+	takeHydrateNodes(): ArrayLike<ChildNode> | undefined {
+		if (this.hydrateNodes) {
+			let hydrateNodes = this.hydrateNodes
+			this.hydrateNodes = undefined
+			return hydrateNodes
+		}
+
+		return undefined
 	}
 
 	afterConnectCallback(param: PartCallbackParameterMask | 0) {
@@ -295,19 +307,12 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 	/** Update from a template result list. */
 	private hydrateTemplateResultList(trs: CompiledTemplateResult[]) {
 		let content: Template[] = []
-		let template: Template | null = null
-		let fromIndex = 0
+		let splitter = new HydrateNodesSplitter(this.hydrateNodes!)
 
 		// Update shared part.
 		for (let i = 0; i < trs.length; i++) {
 			let tr = trs[i]
-			
-			// Generate a empty template, then reuse it.
-			if (!template || !template.canUpdateBy(tr)) {
-				template = tr.maker.make(tr.values)
-			}
-
-			let {nodes, endIndex} = this.splitHydrateNodes(this.hydrateNodes!, fromIndex, template)
+			let nodes = splitter.split(tr)
 			let newT = tr.maker.make(tr.context, nodes)
 
 			if (nodes) {
@@ -323,77 +328,11 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 				newT.afterConnectCallback(PartCallbackParameterMask.FromOwnStateChange | PartCallbackParameterMask.AsDirectNode)
 			}
 
-			fromIndex = endIndex
 			content[i] = newT
 		}
 
-		// Remove rest part.
-		if (fromIndex < this.hydrateNodes!.length) {
-			for (let i = this.hydrateNodes!.length - 1; i >= fromIndex; i--) {
-				this.hydrateNodes![i].remove()
-			}
-		}
-
+		splitter.clear()
 		this.content = content
-	}
-
-	private splitHydrateNodes(hydrateNodes: ArrayLike<ChildNode>, fromIndex: number, template: Template): 
-		{nodes: ChildNode[] | undefined, endIndex: number}
-	{
-		let hIndex = fromIndex
-		let templateNodes = template.el.content.childNodes
-
-		for (let tIndex = 0; tIndex < templateNodes.length; tIndex++) {
-			let tNode = templateNodes[tIndex]
-			let hNode = hIndex < hydrateNodes.length ? hydrateNodes[hIndex] : null
-			let hNodeMismatch = true
-
-			if (!hNode) {
-				break
-			}
-
-			if (tNode.nodeType === Node.ELEMENT_NODE) {
-				hNodeMismatch = hNode.nodeType !== Node.ELEMENT_NODE
-					|| (hNode as Element).localName !== (tNode as Element).localName
-			}
-			else if (tNode.nodeType === Node.COMMENT_NODE) {
-				let commentId = tNode.textContent!
-
-				hNodeMismatch = hNode.nodeType !== Node.COMMENT_NODE
-					|| hNode.textContent !== commentId
-
-				// Search for the match comment marker.
-				if (hNodeMismatch) {
-					for (let i = hIndex + 1; i < hydrateNodes.length; i++) {
-						let n = hydrateNodes[i]
-						if (n.nodeType === Node.COMMENT_NODE
-							&& n.textContent === commentId
-						) {
-							hIndex = i
-							hNode = n
-							hNodeMismatch = false
-							break
-						}
-					}
-				}
-			}
-			else if (tNode.nodeType === Node.TEXT_NODE) {
-				hNodeMismatch = hNode.nodeType !== Node.TEXT_NODE
-			}
-
-			// Eat this node whether match or not.
-			hIndex++
-
-			// Missing match, exit.
-			if (hNodeMismatch) {
-				break
-			}
-		}
-
-		return {
-			nodes: hIndex === fromIndex ? undefined : Array.prototype.slice.call(hydrateNodes, fromIndex, hIndex),
-			endIndex: hIndex,
-		}
 	}
 
 	/** Insert a template before another one, or before slot end position. */

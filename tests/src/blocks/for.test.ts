@@ -8,7 +8,7 @@ describe('Test For Block', () => {
 		return lupos.html`
 			<lu:for ${list}>${(item: number) => lupos.html`
 				<div>${item}</div>
-			`}</lu:if>
+			`}</lu:for>
 		`
 	}
 

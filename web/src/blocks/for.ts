@@ -1,5 +1,5 @@
 import {EditType, getEditRecord} from '../structs/edit'
-import {CompiledTemplateResult, Template, TemplateSlot} from '../template'
+import {CompiledTemplateResult, HydrateNodesSplitter, Template, TemplateSlot} from '../template'
 import {PartCallbackParameterMask} from '../part'
 
 
@@ -39,6 +39,11 @@ export class ForBlock<T = any> {
 
 	/** Update data items. */
 	updateData(data: Iterable<T>) {
+		let hydrateNodes = this.slot.takeHydrateNodes()
+		if (hydrateNodes) {
+			this.hydrateData(data, hydrateNodes)
+			return
+		}
 
 		// Must clone, will compare it with the data at next time updating.
 		let newData = [...data]
@@ -77,6 +82,37 @@ export class ForBlock<T = any> {
 			}
 		}
 
+		this.slot.updateExternalTemplateList(this.templates)
+	}
+
+	/** Update data items. */
+	private hydrateData(data: Iterable<T>, hydrateNodes: ArrayLike<ChildNode>) {
+
+		// Must clone, will compare it with the data at next time updating.
+		let newData = [...data]
+		
+		let splitter = new HydrateNodesSplitter(hydrateNodes)
+	
+		this.data = newData
+		this.templates = []
+
+		for (let index = 0; index < newData.length; index++) {
+			let item = newData[index]
+			let result = this.renderFn(item, index)
+			let nodes = splitter.split(result)
+			let newT = result.maker.make(result.context, nodes)
+
+			if (nodes) {
+				newT.hydrateNodesBefore(this.slot.endOuterPosition)
+			}
+			else {
+				newT.insertNodesBefore(this.slot.endOuterPosition)
+			}
+
+			this.templates.push(newT)
+		}
+
+		splitter.clear()
 		this.slot.updateExternalTemplateList(this.templates)
 	}
 

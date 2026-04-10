@@ -27,12 +27,12 @@ class NodesCloner {
 
 	private compareRecursive(node: Node, cached: NodeCache) {
 		if (node !== cached.node) {
-			throw new Error('Node mismatch:\n' + node.toString())
+			throw new Error('Node mismatch:\n' + node.toString() + '\n' + cached.node.toString())
 		}
 
 		let currentChildren = node.childNodes
 		if (currentChildren.length !== cached.childNodes.length) {
-			throw new Error('Child length mismatch:\n' + node.toString())
+			throw new Error('Child length mismatch:\n' + [...node.childNodes].map(c => c.toString()).join('') + '\n' + cached.childNodes.map(c => c.node.toString()).join(''))
 		}
 
 		for (let i = 0; i < currentChildren.length; i++) {

@@ -1,4 +1,5 @@
-import {willHydrate} from "../component"
+import {willHydrate} from '../component'
+
 
 /** For locating comment nodes by their id. */
 export class HTMLLocator {

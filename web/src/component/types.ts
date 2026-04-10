@@ -7,7 +7,7 @@ import {TemplateStyle} from './style'
 export interface ComponentConstructor {
 	style: TemplateStyle | null
 	SlotContentType: SlotContentType | null
-	new(el?: HTMLElement, willHydrate?: boolean): Component
+	new(el?: HTMLElement): Component
 }
 
 /** Type of `render` method or function. */
