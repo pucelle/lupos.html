@@ -160,7 +160,7 @@ describe('Hydration for <lu:await>', () => {
 
 
 describe('Hydration for <lu:keyed>', () => {
-	it.only('Hydrates <lu:keyed>', async () => {
+	it('Hydrates <lu:keyed>', async () => {
 		class Test extends Component {
 			text: string = 'text'
 			render() {
@@ -185,7 +185,7 @@ describe('Hydration for <lu:keyed>', () => {
 
 
 describe('Hydration for <lu:switch>', () => {
-	it.only('Hydrates <lu:switch>', async () => {
+	it('Hydrates <lu:switch>', async () => {
 		class Test extends Component {
 			text: string = '1'
 			render() {
@@ -218,7 +218,7 @@ describe('Hydration for <lu:switch>', () => {
 
 
 describe('Hydration for <lu:for>', () => {
-	it.only('Hydrates <lu:for>', async () => {
+	it('Hydrates <lu:for>', async () => {
 		class Test extends Component {
 			list: string[] = ['1', '2']
 			render() {

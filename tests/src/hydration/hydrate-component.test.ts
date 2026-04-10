@@ -58,4 +58,25 @@ describe('Hydration for component', () => {
 		await UpdateQueue.untilAllComplete()
 		compare()
 	})
+
+
+	it('hydrates <slot>', async () => {
+		class Parent extends Component {
+			protected render() {
+				return html`<Child>rest slot content</Child>`
+			}
+		}
+		
+		class Child extends Component {
+			protected render() {
+				return html`<div><slot /></div>`
+			}
+		}
+
+		let {com, compare} = await hydrateCom(Parent)
+		await UpdateQueue.untilAllComplete()
+
+		compare()
+		expect(com.el.firstElementChild!.firstElementChild!.textContent).toBe('rest slot content')
+	})
 })

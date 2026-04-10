@@ -79,7 +79,7 @@ export class HydrateHTMLLocator {
 			// hydration list end, clone from template to append.
 			if (!hNode) {
 				hNode = tNode.cloneNode(true) as ChildNode
-				this.walkForMarkers(hNode)
+				this.walkAndMapMarkers(hNode as Element)
 
 				latestHNode.after(hNode)
 				latestHNode = hNode
@@ -93,23 +93,24 @@ export class HydrateHTMLLocator {
 				// Missing match, replace it.
 				if (hNodeMismatch) {
 					let newHNode = tNode.cloneNode(true) as ChildNode
-					this.walkForMarkers(newHNode)
+					this.walkAndMapMarkers(newHNode as Element)
 
 					hNode!.replaceWith(newHNode)
 					hNode = newHNode
 				}
-				else {
-					if ((tNode as Element).hasAttribute('com')) {
-						willHydrate(hNode as Element)
 
-						// Patch rest slot nodes.
-						if (tNode.childNodes.length > 0) {
-							
-						}
+				// Handle component. 
+				else if ((tNode as Element).hasAttribute('com')) {
+					willHydrate(hNode as Element)
+
+					if (tNode.childNodes.length > 0) {
+						this.patchRestSlotNodes(tNode as Element, hNode as Element)
 					}
-					else {
-						this.patchNodesRecursively(tNode.childNodes, hNode.childNodes)
-					}
+				}
+
+				// Skip rest slot contents hydration.
+				else if ((tNode as Element).localName !== 'slot') {
+					this.patchNodesRecursively(tNode.childNodes, hNode.childNodes)
 				}
 			}
 			else if (tNode.nodeType === Node.COMMENT_NODE) {
@@ -120,12 +121,11 @@ export class HydrateHTMLLocator {
 
 				// Search for the comment marker by id.
 				if (hNodeMismatch) {
-					let markerIndex = this.scanForMarker(markerId, hIndex, hydrateNodes)
+					let markerIndex = this.findMarker(markerId, hIndex, hydrateNodes)
 					if (markerIndex !== -1) {
 						hIndex = markerIndex
 						hNode = hydrateNodes[markerIndex]
 						hNodeMismatch = false
-						break
 					}
 				}
 
@@ -163,8 +163,69 @@ export class HydrateHTMLLocator {
 		}
 	}
 
+	/** Patch for rest slot nodes. */
+	private patchRestSlotNodes(tNode: Element, hNode: Element) {
+
+		// Locate hydrated rest slot contents.
+		let restSlotMarkerId = tNode.firstChild!.textContent!
+		let restSlotMarker = this.walkAndFindMarker(hNode, restSlotMarkerId)
+
+		if (restSlotMarker) {
+			this.walkAndMapMarkers(restSlotMarker.parentElement!)
+		}
+
+		// We make a new empty template to cache cloned nodes,
+		// to make locator can at least locate these nodes.
+		else {
+			let template = document.createElement('template')
+
+			for (let i = 0; i < tNode.childNodes.length; i++) {
+				let cloned = tNode.childNodes[i].cloneNode(true)
+				template.content.append(cloned)
+			}
+
+			this.walkAndMapMarkers(template.content)
+		}
+	}
+
+	/** Walk and build markers map. */
+	private walkAndMapMarkers(node: Element | DocumentFragment) {
+		let walker = document.createTreeWalker(
+			node, 
+			NodeFilter.SHOW_COMMENT,
+			null
+		)
+
+		let currentNode
+		while (currentNode = walker.nextNode()) {
+			let id = (currentNode as Comment).textContent
+			if (id) {
+				this.markerMap.set(id, currentNode as Comment)
+			}
+		}
+	}
+
+	/** Walk and try to find a specified id of marker. */
+	private walkAndFindMarker(node: Node, markerId: string): Node | undefined {
+		let walker = document.createTreeWalker(
+			node, 
+			NodeFilter.SHOW_COMMENT,
+			null
+		)
+
+		let currentNode
+		while (currentNode = walker.nextNode()) {
+			let id = (currentNode as Comment).textContent
+			if (id === markerId) {
+				return currentNode
+			}
+		}
+
+		return undefined
+	}
+
 	/** Scan for specified id marker. */
-	private scanForMarker(markerId: string, hIndex: number, hydrateNodes: ArrayLike<ChildNode>): number {
+	private findMarker(markerId: string, hIndex: number, hydrateNodes: ArrayLike<ChildNode>): number {
 		for (let i = hIndex + 1; i < hydrateNodes.length; i++) {
 			let node = hydrateNodes[i]
 			if (node.nodeType === Node.COMMENT_NODE
@@ -178,20 +239,6 @@ export class HydrateHTMLLocator {
 		}
 
 		return -1
-	}
-
-	private walkForMarkers(node: Node) {
-		let walker = document.createTreeWalker(
-			node, 
-			NodeFilter.SHOW_COMMENT,
-			null
-		)
-
-		let currentNode
-		while (currentNode = walker.nextNode()) {
-			let id = (currentNode as Comment).textContent
-			this.markerMap.set(id, currentNode as Comment)
-		}
 	}
 
 	childAt(index: number) {

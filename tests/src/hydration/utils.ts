@@ -27,13 +27,13 @@ class NodesCloner {
 
 	private compareRecursively(node: Node, cached: NodeCache) {
 		if (node !== cached.node) {
-			throw new Error('Node mismatch:\n' + node.toString() + '\n' + cached.node.toString())
+			throw new Error('Node mismatch:\nReceived: ' + node.toString() + '\nExpected: ' + cached.node.toString())
 		}
 
 		let currentChildren = node.childNodes
 		if (currentChildren.length !== cached.childNodes.length) {
-			throw new Error('Child length mismatch:\n' + [...node.childNodes].map(this.outputChildNode).join(' | ')
-				+ '\n' + cached.childNodes.map(c => this.outputChildNode(c.node)).join(' | '))
+			throw new Error('Child length mismatch:\nReceived: ' + [...node.childNodes].map(this.outputChildNode).join(' | ')
+				+ '\nExpected: ' + cached.childNodes.map(c => this.outputChildNode(c.node)).join(' | '))
 		}
 
 		for (let i = 0; i < currentChildren.length; i++) {
@@ -44,6 +44,10 @@ class NodesCloner {
 	private outputChildNode(node: Node) {
 		if (node.nodeType === Node.COMMENT_NODE) {
 			return `<!--${node.textContent ?? ''}-->`
+		}
+
+		if (node.nodeType === Node.TEXT_NODE) {
+			return node.textContent ?? ''
 		}
 
 		return node.toString()

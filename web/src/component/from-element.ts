@@ -5,7 +5,7 @@ import type {Component} from './component'
 const ElementComponentMap: WeakMap<Element, Component> = /*#__PURE__*/new WeakMap()
 
 /** To cache elements for components which will be hydrated. */
-const WillHydrateSet: WeakSet<Element> = /*#__PURE__*/new WeakSet()
+const WillHydrateMap: WeakSet<Element> = /*#__PURE__*/new WeakSet()
 
 
 
@@ -23,7 +23,7 @@ export function getComponentByElement(el: Element): Component | undefined {
 
 /** Element related component will be hydrated later. */
 export function willHydrate(el: Element) {
-	WillHydrateSet.add(el)
+	WillHydrateMap.add(el)
 }
 
 
@@ -32,10 +32,12 @@ export function willHydrate(el: Element) {
  * After visited, element will be cleared.
  */
 export function needsHydrateOnce(el: Element): boolean {
-	let needs = WillHydrateSet.has(el)
+	let needs = WillHydrateMap.has(el)
 	if (needs) {
-		WillHydrateSet.delete(el)
+		WillHydrateMap.delete(el)
 	}
 
 	return needs
 }
+
+

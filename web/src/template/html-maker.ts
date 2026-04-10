@@ -15,7 +15,7 @@ export class HTMLMaker {
 		this.wrapped = wrapped
 	}
 
-	private initNode() {
+	private initTemplate() {
 		this.template = document.createElement('template')
 		this.template.innerHTML = this.html
 
@@ -29,7 +29,7 @@ export class HTMLMaker {
 	/** `hydrateNodes` has at least one node. */
 	make(hydrateNodes: ArrayLike<ChildNode> | undefined): HTMLLocator | HydrateHTMLLocator {
 		if (!this.template) {
-			this.initNode()
+			this.initTemplate()
 		}
 		
 		if (hydrateNodes) {
