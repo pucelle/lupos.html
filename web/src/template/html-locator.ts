@@ -108,8 +108,12 @@ export class HydrateHTMLLocator {
 					}
 				}
 
+				// Skip elements which will apply `:html`. 
 				// Skip rest slot contents hydration.
-				else if ((tNode as Element).localName !== 'slot') {
+				else if (!(tNode as Element).hasAttribute('html')
+					&& (tNode as Element).localName !== 'slot'
+				) {
+					this.patchElementProperties(tNode as Element, hNode as Element)
 					this.patchNodesRecursively(tNode.childNodes, hNode.childNodes)
 				}
 			}
@@ -185,6 +189,27 @@ export class HydrateHTMLLocator {
 			}
 
 			this.walkAndMapMarkers(template.content)
+		}
+	}
+
+	/** 
+	 * Patch element properties, especially class and style.
+	 * But leaves additional attrs which hNode have only.
+	 */
+	private patchElementProperties(tNode: Element, hNode: Element) {
+		let tAttrs = tNode.attributes
+		let hAttrs = hNode.attributes
+
+		for (let tAttr of tAttrs) {
+			if (hAttrs.getNamedItem(tAttr.name)?.value !== tAttr.value) {
+				hAttrs.setNamedItem(tAttr.cloneNode() as Attr)
+			}
+		}
+
+		for (let attrName of ['class', 'style']) {
+			if (!tAttrs.getNamedItem(attrName) && hAttrs.getNamedItem(attrName)) {
+				hAttrs.removeNamedItem(attrName)
+			}
 		}
 	}
 
