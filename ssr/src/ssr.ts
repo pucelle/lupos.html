@@ -162,10 +162,13 @@ export class SSR {
 			this.styleFlushed = true
 		}
 
-		let style = this.document.querySelector('style[mode=static]')
+		let style = this.document.querySelector('style[static]')
 		if (!style) {
 			return ''
 		}
+
+		style.removeAttribute('static')
+		style.setAttribute('ssr', '')
 
 		return this.formatHTML(style.outerHTML)
 	}

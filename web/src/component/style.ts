@@ -80,12 +80,12 @@ class ToUpdateStyle implements Updatable {
 	 * So you may put overwritten styles after script tag to avoid conflict.
 	 */
 	private createStyleElement(type: 'static' | 'dynamic', code: TemplateStyle | string, scriptTag: HTMLElement | null) {
-		if (type === 'static' && document.querySelector('style[mode=static]')) {
+		if (type === 'static' && document.querySelector('style[ssr]')) {
 			return
 		}
 
-		let styleTag =  document.createElement('style')
-		styleTag.setAttribute('mode', type)
+		let styleTag = document.createElement('style')
+		styleTag.setAttribute(type, '')
 
 		if (typeof code === 'function') {
 			new Effector(() => {
