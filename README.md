@@ -146,7 +146,7 @@ module: {
 }
 ```
 
-Note you may need to set `"moduleResolution": "Bundler"` in `tsconfig.json`.
+Note you may need to set `"moduleResolution": "Bundler"` in `tsconfig.json` to import `lupos/ssr`.
 
 
 
