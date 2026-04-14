@@ -122,16 +122,38 @@ export class Checkbox extends Component {
 	- `Transition`: play defined web or per-frame transition.
 
 
+
+## SSR & Hydration
+
+Use `SSR` export from `lupos/ssr` to do server side rendering, work in node, bun and workers.
+
+You should render a entry component by `ssr.renderComponent`, and render css styles by `ssr.renderStyles`, and then interpolate them into the final HTML codes.
+
+You should also add following codes to your `webpack.config.js` to exclude outputting style (which SSR had rendered).
+
+```js
+module: {
+	rules: [
+		{
+			test: /\.js$/,
+			loader: 'string-replace-loader',
+			options: {
+				search: /static style = .+/g, 
+				replace: '',
+			}
+		}
+	]
+}
+```
+
+Note you may need to set `"moduleResolution": "Bundler"` in `tsconfig.json`.
+
+
+
 ## More about
 
 **lupos.html** was inspired by [lit-html](https://lit-html.polymer-project.org/) and [svelte](https://svelte.dev/).
 
-
-
-## SSR
-
-Use `SSR` import from `lupos.html/ssr` to do server side rendering.
-Note you may need to set `"moduleResolution": "Bundler"` in `tsconfig.json`.
 
 
 
