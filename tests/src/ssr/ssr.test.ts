@@ -5,7 +5,7 @@ import {describe, it, expect} from 'vitest'
 
 class SSRTest extends Component {
 
-	static style = css`.ssr-test{color: red}`
+	static style = css`.ssr-test{color: red;}`
 
 	protected render(): RenderResult {
 		return html`<template class="ssr-test">SSR</template>`
@@ -15,17 +15,27 @@ class SSRTest extends Component {
 defineCustomElement('ssr-test', SSRTest)
 
 
+export function cleanHTML(code: string) {
+	return code.replace(/ iid="\d+"/g, '').replace(/ com=".+?"/g, '')
+}
+
+
 describe('SSR', () => {
-	it('ssr component', async () => {
+	it('ssr render', async () => {
 		let ssr = new SSR('/')
-		let rendered = await ssr.renderToString(html`<SSRTest>`)
-		expect(rendered).toBe('<div class="ssr-test">SSR</div>')
-		expect(await ssr.toString()).toBe('<!DOCTYPE html><html><head><style name="SSRTest">.ssr-test{color: red}</style></head><body></body></html>')
+		let rendered = (await ssr.render(html`<SSRTest>`))
+		expect(cleanHTML(rendered)).toBe('<div class="ssr-test">SSR</div>')
 	})
 
-	it('ssr custom tag', async () => {
+	it('ssr render component', async () => {
 		let ssr = new SSR('/')
-		ssr.document.body.insertAdjacentHTML('beforeend', '<ssr-test></ssr-test>')
-		expect(await ssr.toString()).toBe('<!DOCTYPE html><html><head><style name="SSRTest">.ssr-test{color: red}</style></head><body><ssr-test class="ssr-test">SSR</ssr-test></body></html>')
+		let rendered = await ssr.renderComponent(SSRTest, 'ssr-test')
+		expect(cleanHTML(rendered)).toBe('<ssr-test ssr class="ssr-test">SSR</ssr-test>')
+	})
+
+	it('ssr render style', async () => {
+		let ssr = new SSR('/')
+		let rendered = await ssr.renderStyles()
+		expect(rendered).toBe('<style mode="static">.ssr-test{color:red;}</style>')
 	})
 })

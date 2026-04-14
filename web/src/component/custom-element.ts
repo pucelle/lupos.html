@@ -1,4 +1,4 @@
-import {getComponentByElement} from './from-element'
+import {getComponentByElement, willHydrate} from './from-element'
 import {ComponentConstructor} from './types'
 import {PartCallbackParameterMask} from '../part'
 
@@ -63,10 +63,13 @@ function defineCallbacks(name: string) {
 	})
 }
 
-/** Calls connect callback of specified custom element. */
-export function connectCustomElement(el: HTMLElement) {
+/** 
+ * Calls connect callback of specified custom element.
+ * Returns whether truly connected.
+ */
+export function connectCustomElement(el: HTMLElement): boolean {
 	if (!CustomElementConstructorMap.has(el.localName)) {
-		return
+		return false
 	}
 	
 	let com = getComponentByElement(el)
@@ -74,10 +77,9 @@ export function connectCustomElement(el: HTMLElement) {
 	// Component instance isn't created.
 	if (!com) {
 
-		// Simply empty children for ssr custom node.
+		// Will do hydration.
 		if (el.hasAttribute('ssr')) {
-			el.removeAttribute('ssr')
-			el.innerHTML = ''
+			willHydrate(el)
 		}
 
 		let {Com, propertyMap} = CustomElementConstructorMap.get(el.localName)!
@@ -90,6 +92,7 @@ export function connectCustomElement(el: HTMLElement) {
 	}
 
 	com.afterConnectCallback(PartCallbackParameterMask.AsDirectNode)
+	return true
 }
 
 /** Make a property parameter for initializing component. */

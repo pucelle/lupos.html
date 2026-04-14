@@ -458,29 +458,46 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	}
 
 	/** 
-	 * Apply rest slot range from a dynamic component,
+	 * Set rest slot range from a dynamic component,
 	 * which may be used to fill `<slot>` inside current component context.
 	 * For internal usage only, and will be called by compiled codes.
 	 */
-	$applyRestSlotRange(slotRange: SlotRange) {
+	$setRestSlotRange(slotRange: SlotRange) {
 		this.$restSlotRange = slotRange
 	}
 
 	/** 
-	 * Apply rest slot range nodes, which may be used to fill `<slot>` inside current component context.
+	 * Set rest slot range nodes, which may be used to fill `<slot>` inside current component context.
 	 * For internal usage only, and will be called by compiled codes.
 	 */
-	$applyRestSlotRangeNodes(startInnerNode: ChildNode, endInnerNode: ChildNode = startInnerNode) {
+	$setRestSlotRangeNodes(startInnerNode: ChildNode, endInnerNode: ChildNode) {
 		this.$restSlotRange = new SlotRange(startInnerNode, endInnerNode)
 	}
 
 	/** 
-	 * Get list of rest slot nodes.
+	 * Test whether specified node is the start inner node of rest slot range.
+	 * Only for hydration.
+	 */
+	$matchRestSlotStartNode(startInnerNode: ChildNode): boolean {
+		return this.$restSlotRange?.startInnerNode === startInnerNode
+	}
+
+	/** 
+	 * Apply rest slot nodes, move them to target slot element.
 	 * Use these nodes to fill `<slot />` element that the component itself render.
 	 * For internal usage only, and be called by compiled codes.
 	 */
-	$getRestSlotNodes(): ChildNode[] {
-		return this.$restSlotRange ? [...this.$restSlotRange.walkNodes()] : []
+	$applyRestSlotNodes(toSlot: HTMLSlotElement) {
+		if (!this.$restSlotRange) {
+			return
+		}
+
+		// When hydration, no need to move rest slot nodes.
+		if (this.$restSlotRange.startInnerNode.parentElement === toSlot) {
+			return
+		}
+
+		toSlot.append(...this.$restSlotRange.walkNodes())
 	}
 
 	afterConnectCallback(this: Component<{}>, param: PartCallbackParameterMask | 0) {

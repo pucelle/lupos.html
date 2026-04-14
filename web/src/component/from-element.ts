@@ -21,6 +21,12 @@ export function getComponentByElement(el: Element): Component | undefined {
 }
 
 
+/** Test whether have component instance bound by an associated element. */
+export function hasComponentByElement(el: Element): boolean {
+	return ElementComponentMap.has(el)
+}
+
+
 /** Element related component will be hydrated later. */
 export function willHydrate(el: Element) {
 	WillHydrateMap.add(el)

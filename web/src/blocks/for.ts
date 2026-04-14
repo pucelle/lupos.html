@@ -109,6 +109,7 @@ export class ForBlock<T = any> {
 				newT.insertNodesBefore(this.slot.endOuterPosition)
 			}
 
+			newT.update(result.values)
 			this.templates.push(newT)
 		}
 

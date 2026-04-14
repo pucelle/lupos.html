@@ -51,7 +51,7 @@ export class DynamicComponentBlock {
 			this.originalEl = undefined
 
 			if (this.contentRange) {
-				com.$applyRestSlotRange(this.contentRange)
+				com.$setRestSlotRange(this.contentRange)
 			}
 		}
 	

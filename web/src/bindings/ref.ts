@@ -23,6 +23,8 @@ const enum RefType {
  * Note `:ref` can't visit or bind scoped data. e.g.: following examples will not work:
  * - `<div :ref=${(el) => this.refElWithData(el, localVariable)}>`
  * - `<div :ref=${(el) => if (localVariable) this.refElWithData(el)}>`
+ * 
+ * Note otherwise: if element where `:ref` attached get re-used, ref function will not be called.
  */
 export class RefBinding implements Binding, Part {
 

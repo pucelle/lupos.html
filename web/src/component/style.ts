@@ -1,6 +1,5 @@
 import {Effector, Updatable, UpdateQueue} from 'lupos'
 import {TemplateResult} from '../template'
-import {inSSR} from '../ssr'
 
 
 /** Type of the values returned from `Component.style()`. */
@@ -42,12 +41,7 @@ class ToUpdateStyle implements Updatable {
 		let scriptTag = document.head.querySelector('script')
 
 		for (let style of group) {
-			this.createStyleElement(style.name, style.type, style.code, scriptTag)
-		}
-
-		// In SSR env, not reset it for next time rendering.
-		if (!inSSR) {
-			toUpdateStyle = null
+			this.createStyleElement(style.type, style.code, scriptTag)
 		}
 	}
 
@@ -85,9 +79,12 @@ class ToUpdateStyle implements Updatable {
 	 * Always insert it into before any script tags.
 	 * So you may put overwritten styles after script tag to avoid conflict.
 	 */
-	private createStyleElement(identifyName: string, type: 'static' | 'dynamic', code: TemplateStyle | string, scriptTag: HTMLElement | null) {
-		let styleTag = document.createElement('style')
-		styleTag.setAttribute('coms', identifyName)
+	private createStyleElement(type: 'static' | 'dynamic', code: TemplateStyle | string, scriptTag: HTMLElement | null) {
+		if (type === 'static' && document.querySelector('style[mode=static]')) {
+			return
+		}
+
+		let styleTag =  document.createElement('style')
 		styleTag.setAttribute('mode', type)
 
 		if (typeof code === 'function') {
@@ -136,9 +133,11 @@ export function addStyle(style: TemplateStyle) {
 /** 
  * Flush component styles to style tags.
  * Normally only for SSR rendering.
+ * Can be called for multiple times.
  */
-export function flushStyles() {
+export async function flushStyles() {
 	if (toUpdateStyle) {
 		toUpdateStyle.willUpdate()
+		await UpdateQueue.untilAllComplete()
 	}
 }

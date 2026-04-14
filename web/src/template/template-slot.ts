@@ -305,15 +305,15 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 	}
 
 	/** Update from a template result list. */
-	private hydrateTemplateResultList(trs: CompiledTemplateResult[]) {
+	private hydrateTemplateResultList(results: CompiledTemplateResult[]) {
 		let content: Template[] = []
 		let splitter = new HydrateNodesSplitter(this.hydrateNodes!)
 
 		// Update shared part.
-		for (let i = 0; i < trs.length; i++) {
-			let tr = trs[i]
-			let nodes = splitter.split(tr)
-			let newT = tr.maker.make(tr.context, nodes)
+		for (let i = 0; i < results.length; i++) {
+			let result = results[i]
+			let nodes = splitter.split(result)
+			let newT = result.maker.make(result.context, nodes)
 
 			if (nodes) {
 				newT.hydrateNodesBefore(this.endOuterPosition)
@@ -322,7 +322,7 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 				this.insertTemplate(newT, null)
 			}
 
-			newT.update(tr.values)
+			newT.update(result.values)
 
 			if (this.connected) {
 				newT.afterConnectCallback(PartCallbackParameterMask.FromOwnStateChange | PartCallbackParameterMask.AsDirectNode)

@@ -1,4 +1,5 @@
 import {willHydrate} from '../component'
+import {getComponentByElement} from '../component/from-element'
 
 
 /** For locating comment nodes by their id. */
@@ -114,7 +115,7 @@ export class HydrateHTMLLocator {
 					&& (tNode as Element).localName !== 'slot'
 				) {
 					this.patchElementProperties(tNode as Element, hNode as Element)
-					this.patchNodesRecursively(tNode.childNodes, hNode.childNodes)
+					this.patchChildNodesRecursively(tNode, hNode)
 				}
 			}
 			else if (tNode.nodeType === Node.COMMENT_NODE) {
@@ -161,8 +162,16 @@ export class HydrateHTMLLocator {
 
 		// Removes redundant nodes.
 		if (hIndex < hydrateNodes.length) {
-			for (let i = hydrateNodes.length - 1; i >= hIndex; i--) {
-				hydrateNodes[i].remove()
+			
+			// Like `<Row><Col /></Row>`, row template not specify `<slot>`,
+			// so `<Col />` becomes rest slot content silently.
+			let beRestContentsSilently = templateNodes.length === 0
+				&& getComponentByElement(hydrateNodes[0].parentElement!)?.$matchRestSlotStartNode(hydrateNodes[0])
+
+			if (!beRestContentsSilently) {
+				for (let i = hydrateNodes.length - 1; i >= hIndex; i--) {
+					hydrateNodes[i].remove()
+				}
 			}
 		}
 	}
@@ -175,7 +184,7 @@ export class HydrateHTMLLocator {
 		let restSlotMarker = this.walkAndFindMarker(hNode, restSlotMarkerId)
 
 		if (restSlotMarker) {
-			this.walkAndMapMarkers(restSlotMarker.parentElement!)
+			this.patchNodesRecursively(tNode.childNodes, restSlotMarker.parentElement!.childNodes)
 		}
 
 		// We make a new empty template to cache cloned nodes,
@@ -210,6 +219,23 @@ export class HydrateHTMLLocator {
 			if (!tAttrs.getNamedItem(attrName) && hAttrs.getNamedItem(attrName)) {
 				hAttrs.removeNamedItem(attrName)
 			}
+		}
+	}
+
+	/** Can handle when `hNode` have no child nodes. */
+	private patchChildNodesRecursively(tNode: Node, hNode: Node) {
+		// Empty text node will be removed.
+		if (hNode.childNodes.length === 0) {
+			if (tNode.childNodes.length > 0) {
+				for (let child of tNode.childNodes) {
+					hNode.appendChild(child.cloneNode(true))
+				}
+			}
+		}
+
+		// Skip both have no child nodes.
+		else if (hNode.childNodes.length > 0) {
+			this.patchNodesRecursively(tNode.childNodes, hNode.childNodes)
 		}
 	}
 

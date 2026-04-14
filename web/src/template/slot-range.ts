@@ -9,8 +9,8 @@
  */
 export class SlotRange {
 
-	private startInnerNode: ChildNode
-	private endInnerNode: ChildNode
+	readonly startInnerNode: ChildNode
+	readonly endInnerNode: ChildNode
 
 	constructor(startInnerNode: ChildNode, endInnerNode: ChildNode) {
 		this.startInnerNode = startInnerNode
