@@ -47,6 +47,7 @@ export class SSR {
 		}
 
 		global.location = win.location
+		global.history = win.history
 		global.customElements = win.customElements
 
 		global.HTMLElement = win.HTMLElement
@@ -97,6 +98,18 @@ export class SSR {
 				removeEventListener: () => {},
 				dispatchEvent: () => true,
 			})
+		}
+
+		if (!global.history) {
+			global.history = {
+				length: 0,
+				state: null,
+				pushState() {},
+				replaceState() {},
+				back() {},
+				forward() {},
+				go() {},
+			}
 		}
 
 		global.ResizeObserver = class ResizeObserver {
@@ -150,6 +163,14 @@ export class SSR {
 	}
 
 	/** 
+	 * Render document title, include `<title>` tag.
+	 * Must after some components rendered.
+	 */
+	renderTitle(): string {
+		return this.document.head.querySelector('title')!.outerHTML
+	}
+
+	/** 
 	 * Render all style codes which declared by css`...`.
 	 * Although it can be called for multiple times, we would suggest
 	 * you to import all components firstly, and render it for only once.
@@ -162,7 +183,7 @@ export class SSR {
 			this.styleFlushed = true
 		}
 
-		let style = this.document.querySelector('style[static]')
+		let style = this.document.head.querySelector('style[static]')
 		if (!style) {
 			return ''
 		}
