@@ -33,17 +33,14 @@ export function willHydrate(el: Element) {
 }
 
 
-/** 
- * Check whether an elements need to be hydrated.
- * After visited, element will be cleared.
- */
-export function needsHydrateOnce(el: Element): boolean {
-	let needs = WillHydrateMap.has(el)
-	if (needs) {
-		WillHydrateMap.delete(el)
-	}
-
-	return needs
+/** Check whether an element need to be hydrated. */
+export function needsHydrate(el: Element): boolean {
+	return WillHydrateMap.has(el)
 }
 
+
+/** To complete hydration of element. */
+export function completeHydration(el: Element) {
+	WillHydrateMap.delete(el)
+}
 

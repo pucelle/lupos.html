@@ -1,6 +1,6 @@
 import {ContextVariableConstructor, EventFirer, Observed, UpdateQueue, beginTrack, endTrack, Updatable, promisify} from 'lupos'
 import {TemplateStyle} from './style'
-import {addElementComponentMap, getComponentByElement, needsHydrateOnce} from './from-element'
+import {addElementComponentMap, completeHydration, getComponentByElement, needsHydrate} from './from-element'
 import {TemplateSlot, SlotPosition, SlotPositionType, CompiledTemplateResult, SlotContentType} from '../template'
 import {ComponentConstructor, RenderResult} from './types'
 import {getComponentSlotParameter, Part, PartCallbackParameterMask} from '../part'
@@ -196,6 +196,14 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 		return (this.$stateMask & ComponentStateMask.Connected) > 0
 	}
 
+	/** 
+	 * Check whether current component needs to be hydrated.
+	 * Always returns `false` after connected.
+	 */
+	get needsHydrate(): boolean {
+		return needsHydrate(this.el)
+	}
+
 	/** After any tracked data change, enqueue it to update in next animation frame. */
 	willUpdate() {
 		if (!this.connected) {
@@ -252,14 +260,10 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	}
 
 	/** Init `contentSlot`. */
-	protected initContentSlot(): TemplateSlot {
+	protected initContentSlot(hydrationNeeded: boolean): TemplateSlot {
 		let position = new SlotPosition<SlotPositionType.AfterContent>(SlotPositionType.AfterContent, this.el)
 		let Com = this.constructor as ComponentConstructor
-		let hydrateNodes: ArrayLike<ChildNode> | undefined = undefined
-		
-		if (needsHydrateOnce(this.el)) {
-			hydrateNodes = this.el.childNodes
-		}
+		let hydrateNodes = hydrationNeeded ? this.el.childNodes : undefined
 
 		return new TemplateSlot(position, Com.SlotContentType, hydrateNodes)
 	}
@@ -505,9 +509,12 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 			return
 		}
 
+		let hydrationNeeded = false
+
 		if ((this.$stateMask & ComponentStateMask.Created) === 0) {
 			this.$stateMask |= ComponentStateMask.Created
-			this.$contentSlot = this.initContentSlot()
+			hydrationNeeded = needsHydrate(this.el)
+			this.$contentSlot = this.initContentSlot(hydrationNeeded)
 			this.onCreated()
 		}
 
@@ -540,6 +547,10 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 		// After binding `updated` because may bind more `updated` events in `onConnected`.
 		this.onConnected()
 		this.fire('connected')
+
+		if (hydrationNeeded) {
+			completeHydration(this.el)
+		}
 	}
 
 	beforeDisconnectCallback(this: Component<{}>, param: PartCallbackParameterMask | 0): Promise<void> | void {

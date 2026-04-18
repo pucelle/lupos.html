@@ -84,6 +84,7 @@ export class HydrateHTMLLocator {
 
 				latestHNode.after(hNode)
 				latestHNode = hNode
+				hIndex++
 				continue
 			}
 
@@ -148,11 +149,10 @@ export class HydrateHTMLLocator {
 			else if (tNode.nodeType === Node.TEXT_NODE) {
 				let hNodeMismatch = hNode.nodeType !== Node.TEXT_NODE
 
-				// Missing match, replace it.
+				// Missing match, insert text before current node.
 				if (hNodeMismatch) {
-					let newHNode = tNode.cloneNode(true) as ChildNode
-					hNode!.replaceWith(newHNode)
-					hNode = newHNode
+					let newText = tNode.cloneNode(true) as ChildNode
+					hNode!.before(newText)
 				}
 			}
 
