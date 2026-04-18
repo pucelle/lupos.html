@@ -149,10 +149,15 @@ export class SSR {
 	 * Note it will not connect custom elements internal.
 	 * `tagName` can be used to render to custom tag, for later hydration easier.
 	 */
-	async renderComponent(Com: typeof Component, tagName: string = 'div'): Promise<string> {
+	async renderComponent(Com: typeof Component, tagName: string = 'div', promiseToWait: (() => Promise<any>) | null = null): Promise<string> {
 		let com = new Com(document.createElement(tagName))
 		await com.connectManually()
 		await UpdateQueue.untilAllComplete()
+
+		if (promiseToWait) {
+			await promiseToWait()
+			await UpdateQueue.untilAllComplete()
+		}
 
 		com.el.setAttribute('ssr', '')
 		return this.formatHTML(com.el.outerHTML)
