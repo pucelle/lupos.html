@@ -110,13 +110,14 @@ export class HydrateHTMLLocator {
 					}
 				}
 
-				// Skip elements which will apply `:html`. 
 				// Skip rest slot contents hydration.
-				else if (!(tNode as Element).hasAttribute('html')
-					&& (tNode as Element).localName !== 'slot'
-				) {
+				else if ((tNode as Element).localName !== 'slot') {
 					this.patchElementProperties(tNode as Element, hNode as Element)
-					this.patchChildNodesRecursively(tNode, hNode)
+
+					// Skip elements which will apply `:html`. 
+					if (!(tNode as Element).hasAttribute('html')) {
+						this.patchChildNodesRecursively(tNode, hNode)
+					}
 				}
 			}
 			else if (tNode.nodeType === Node.COMMENT_NODE) {

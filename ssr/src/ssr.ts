@@ -9,14 +9,14 @@ import {Component, connectCustomElement, flushStyles, render, RenderResult, rese
  */
 export class SSR {
 
-	readonly path: string
+	readonly uri: string
 	readonly window: Window
 	readonly document: Document
 
 	private styleFlushed: boolean = false
 
-	constructor(path: string) {
-		this.path = path
+	constructor(uri: string) {
+		this.uri = uri
 		this.window = this.initWindow()
 		this.document = this.window.document
 
@@ -28,7 +28,7 @@ export class SSR {
 		let parseHTML = linkedom.parseHTML as any
 
 		let {window: win} = parseHTML('<!DOCTYPE html><html><head></head><body></body></html>', {
-			location: new URL('https://lupos.html' + this.path)
+			location: new URL(this.uri, 'https://lupos.html')
 		})
 
 		let global = globalThis as any
