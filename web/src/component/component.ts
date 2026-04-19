@@ -581,13 +581,11 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	 * will play enter transition after appended.
 	 */
 	appendTo(container: Element, canPlayEnterTransition: boolean = true) {
-		if (this.connected) {
-			this.remove()
-		}
-
 		container.append(this.el)
 		
-		if (document.contains(this.el)) {
+		// It's common that some popups initialized in a container,
+		// and append to body after ready.
+		if (!this.connected && document.contains(this.el)) {
 			let mask = PartCallbackParameterMask.AsDirectNode
 
 			if (!canPlayEnterTransition) {
