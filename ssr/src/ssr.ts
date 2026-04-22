@@ -1,6 +1,18 @@
 import {UpdateQueue} from 'lupos'
 import * as linkedom from 'linkedom'
-import {Component, connectCustomElement, flushStyles, render, RenderResult, resetInSSR} from '../../web/out'
+import {Component, connectCustomElement, flushStyles, render, RenderResult, resetInSSR, resetOnPageInit} from '../../web/out'
+
+
+// Cache page init callbacks.
+const PageInitCallbacks: (() => void)[] = []
+
+// Declare `onPageInit` for SSR environment.
+function onPageInit(callback: () => void) {
+	PageInitCallbacks.push(callback)
+}
+
+// Reset `onPageInit`.
+resetOnPageInit(onPageInit)
 
 
 /** 
@@ -127,6 +139,10 @@ export class SSR {
 		}
 
 		global.cancelAnimationFrame = function(_id: number) {}
+
+		for (let callback of PageInitCallbacks) {
+			callback()
+		}
 
 		return win
 	}
