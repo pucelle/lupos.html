@@ -163,17 +163,7 @@ export class HydrateHTMLLocator {
 
 		// Removes redundant nodes.
 		if (hIndex < hydrateNodes.length) {
-			
-			// Like `<Row><Col /></Row>`, row template not specify `<slot>`,
-			// so `<Col />` becomes rest slot content silently.
-			let beRestContentsSilently = templateNodes.length === 0
-				&& getComponentByElement(hydrateNodes[0].parentElement!)?.$matchRestSlotStartNode(hydrateNodes[0])
-
-			if (!beRestContentsSilently) {
-				for (let i = hydrateNodes.length - 1; i >= hIndex; i--) {
-					hydrateNodes[i].remove()
-				}
-			}
+			this.cleanHydrateNodes(templateNodes, hydrateNodes, hIndex)
 		}
 	}
 
@@ -190,6 +180,7 @@ export class HydrateHTMLLocator {
 
 		// We make a new empty template to cache cloned nodes,
 		// to make locator can at least locate these nodes.
+		// and also insert into parent `hNode` as silent rest slot nodes.
 		else {
 			let template = document.createElement('template')
 
@@ -199,6 +190,7 @@ export class HydrateHTMLLocator {
 			}
 
 			this.walkAndMapMarkers(template.content)
+			hNode.appendChild(template.content)
 		}
 	}
 
@@ -225,6 +217,7 @@ export class HydrateHTMLLocator {
 
 	/** Can handle when `hNode` have no child nodes. */
 	private patchChildNodesRecursively(tNode: Node, hNode: Node) {
+
 		// Empty text node will be removed.
 		if (hNode.childNodes.length === 0) {
 			if (tNode.childNodes.length > 0) {
@@ -237,6 +230,35 @@ export class HydrateHTMLLocator {
 		// Skip both have no child nodes.
 		else if (hNode.childNodes.length > 0) {
 			this.patchNodesRecursively(tNode.childNodes, hNode.childNodes)
+		}
+	}
+
+	/** Clean hydration nodes that have no template nodes match. */
+	private cleanHydrateNodes(templateNodes: ArrayLike<ChildNode>, hydrateNodes: ArrayLike<ChildNode>, hIndex: number) {
+		
+		// Like `<Row><Col /></Row>`, row template not specify `<slot>`,
+		// so `<Col />` becomes silent rest slot contents.
+		let cleanFromIndex = hydrateNodes.length - 1
+
+		if (templateNodes.length === 0) {
+			let containerCom = getComponentByElement(hydrateNodes[0].parentElement!)
+			if (containerCom) {
+				let restSlotStartNode = containerCom.$getRestSlotStartNode()
+				if (restSlotStartNode) {
+					for (let i = hydrateNodes.length - 1; i >= hIndex; i--) {
+						if (hydrateNodes[i] === restSlotStartNode) {
+							cleanFromIndex = i - 1
+							break
+						}
+					}
+				}
+			}
+		}
+
+		if (cleanFromIndex >= hIndex) {
+			for (let i = cleanFromIndex; i >= hIndex; i--) {
+				hydrateNodes[i].remove()
+			}
 		}
 	}
 

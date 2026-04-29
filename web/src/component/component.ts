@@ -479,11 +479,11 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	}
 
 	/** 
-	 * Test whether specified node is the start inner node of rest slot range.
+	 * Get the start inner node of rest slot range.
 	 * Only for hydration.
 	 */
-	$matchRestSlotStartNode(startInnerNode: ChildNode): boolean {
-		return this.$restSlotRange?.startInnerNode === startInnerNode
+	$getRestSlotStartNode(): ChildNode | undefined {
+		return this.$restSlotRange?.startInnerNode
 	}
 
 	/** 
