@@ -10,5 +10,15 @@ export interface ComponentConstructor {
 	new(el?: HTMLElement): Component
 }
 
-/** Type of `render` method or function. */
-export type RenderResult = TemplateResult | TemplateResult[] | CompiledTemplateResult | CompiledTemplateResult[] | string | number | null
+/** Primitive type of `render` result which render method or function returned. */
+export type PrimitiveRenderResult = TemplateResult
+	| TemplateResult[]
+	| CompiledTemplateResult
+	| CompiledTemplateResult[]
+	| string | number | null
+
+/** 
+ * Type of `render` result which render method or function returned.
+ * Can be a promise which returns primitive render result.
+ */
+export type RenderResult = PrimitiveRenderResult | Promise<PrimitiveRenderResult>

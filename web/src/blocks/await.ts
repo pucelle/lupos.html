@@ -1,26 +1,27 @@
-import {Template, TemplateMaker, TemplateSlot} from '../template'
+import {RenderResult} from '../component'
+import {CompiledTemplateResult, TemplateMaker, TemplateSlot} from '../template'
 
 
 /** 
  * Make it by compiling:
  * ```html
- * 	<lu:await ${...}>...</lu:await>
- * 	<lu:then>...</lu:then>
- * 	<lu:catch>...</lu:catch>
+ * 	<lu:await ${AsyncContent}>
+ *     Default Content
+ *  </lu:await>
  * ```
  */
 export class AwaitBlock {
 
-	readonly makers: (TemplateMaker | null)[]
+	// May contain more maker like catch branch.
+	readonly maker: TemplateMaker | null
+
 	readonly slot: TemplateSlot
 	readonly context: any
 
 	private promise: Promise<any> | null = null
-	private values: any[] | null = null
-	private template: Template | null = null
 
-	constructor(makers: (TemplateMaker | null)[], slot: TemplateSlot, context: any) {
-		this.makers = makers
+	constructor(maker: TemplateMaker | null, slot: TemplateSlot, context: any) {
+		this.maker = maker
 		this.slot = slot
 		this.context = context
 	}
@@ -29,29 +30,36 @@ export class AwaitBlock {
 	 * Note update await block or resolve awaiting promise must wait
 	 * for a micro task tick, then template will begin to update.
 	 */
-	update(promise: Promise<any>, values: any[]) {
-		this.values = values
-		
-		if (promise !== this.promise) {
-			this.updateIndex(0)
-			
-			promise.then(() => {
-				this.updateIndex(1)
-			})
-			.catch(() => {
-				this.updateIndex(2)
-			})
+	update(promise: Promise<RenderResult>, values: any[]) {
+		if (promise === this.promise) {
+			return
+		}
 
-			this.promise = promise
-		}
-		else if (this.template) {
-			this.template.update(values)
-		}
+		this.updateDefault(values)
+		
+		promise.then((result: RenderResult) => {
+			if (promise === this.promise) {
+				this.updatePromised(result)
+			}
+		})
+
+		this.promise = promise
 	}
 	
-	private updateIndex(index: number) {
-		let maker = this.makers[index]
-		this.template = maker ? this.slot.makeTemplate(maker, this.context) : null
-		this.slot.updateExternalTemplate(this.template, this.values!)
+	private updateDefault(values: any[]) {
+		let maker = this.maker
+
+		// If default content not specified,
+		// not update it but only update and replace for promised.
+		if (!maker) {
+			return
+		}
+
+		let result = new CompiledTemplateResult(maker, values, this.context)
+		this.slot.update(result)
+	}
+
+	private updatePromised(result: RenderResult) {
+		this.slot.update(result)
 	}
 }

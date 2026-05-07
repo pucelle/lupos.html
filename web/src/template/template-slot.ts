@@ -5,6 +5,7 @@ import {Part, PartCallbackParameterMask} from '../part'
 import {NodeTemplateMaker, TextTemplateMaker} from './template-makers'
 import {TemplateMaker} from './template-maker'
 import {HydrateNodesSplitter} from './hydration-splitter'
+import {PrimitiveRenderResult, RenderResult} from '../component'
 
 
 /** 
@@ -16,6 +17,7 @@ export const enum SlotContentType {
 	TemplateResultList = 1,
 	Text = 2,
 	Node = 3,
+	Promise = 4,
 }
 
 
@@ -37,9 +39,9 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 
 	private contentType: T | null = null
 	private readonly knownContentType: boolean
-
 	private hydrateNodes: ArrayLike<ChildNode> | undefined
 	private content: Template | Template[] | null = null
+	private promise: Promise<RenderResult> | null = null
 
 	constructor(
 		endOuterPosition: SlotPosition<SlotEndOuterPositionType>,
@@ -156,6 +158,17 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 		else if (this.contentType === SlotContentType.Node) {
 			this.updateNode(value as ChildNode)
 		}
+		else if (this.contentType === SlotContentType.Promise) {
+			if (value !== this.promise) {
+				this.promise = value as Promise<PrimitiveRenderResult>;
+
+				(value as Promise<PrimitiveRenderResult>).then(result => {
+					if (this.promise === value) {
+						this.update(result)
+					}
+				})
+			}
+		}
 	}
 
 	/** 
@@ -165,18 +178,31 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 	hydrate(value: unknown) {
 		if (this.contentType === SlotContentType.TemplateResult) {
 			this.hydrateTemplateResult(value as CompiledTemplateResult)
+			this.hydrateNodes = undefined
 		}
 		else if (this.contentType === SlotContentType.TemplateResultList) {
 			this.hydrateTemplateResultList(value as CompiledTemplateResult[])
+			this.hydrateNodes = undefined
 		}
 		else if (this.contentType === SlotContentType.Text) {
 			this.hydrateText(value)
+			this.hydrateNodes = undefined
 		}
 		else if (this.contentType === SlotContentType.Node) {
 			this.hydrateNode(value as ChildNode)
+			this.hydrateNodes = undefined
 		}
+		else if (this.contentType === SlotContentType.Promise) {
+			if (value !== this.promise) {
+				this.promise = value as Promise<PrimitiveRenderResult>;
 
-		this.hydrateNodes = undefined
+				(value as Promise<PrimitiveRenderResult>).then(result => {
+					if (this.promise === value) {
+						this.hydrate(result)
+					}
+				})
+			}
+		}
 	}
 
 	/** Identify content type by value. */
@@ -191,6 +217,9 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 			return SlotContentType.TemplateResultList as T
 		}
 		else if (value instanceof Node) {
+			return SlotContentType.Promise as T
+		}
+		else if (value instanceof Promise) {
 			return SlotContentType.Node as T
 		}
 		else {
