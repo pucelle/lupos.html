@@ -163,7 +163,7 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 				this.promise = value as Promise<PrimitiveRenderResult>;
 
 				(value as Promise<PrimitiveRenderResult>).then(result => {
-					if (this.promise === value) {
+					if (this.promise === value && this.connected) {
 						this.update(result)
 					}
 				})
@@ -197,7 +197,7 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 				this.promise = value as Promise<PrimitiveRenderResult>;
 
 				(value as Promise<PrimitiveRenderResult>).then(result => {
-					if (this.promise === value) {
+					if (this.promise === value && this.connected) {
 						this.hydrate(result)
 					}
 				})

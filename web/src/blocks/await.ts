@@ -38,7 +38,7 @@ export class AwaitBlock {
 		this.updateDefault(values)
 		
 		promise.then((result: RenderResult) => {
-			if (promise === this.promise) {
+			if (promise === this.promise && this.slot.connected) {
 				this.updatePromised(result)
 			}
 		})
