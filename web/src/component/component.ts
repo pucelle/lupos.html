@@ -701,20 +701,16 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 }
 
 
-// For localhost debugging.
-/*#__PURE__*/(() => {
-	if (typeof location !== 'undefined'
-		&& (location.hostname === "localhost"
-			|| location.hostname === "127.0.0.1"
-			|| location.protocol === 'file:'
-		)
-	) {
-		let original = (Component as any).prototype.onCreated;
-		
-		(Component as any).prototype.onCreated = function() {
-			original.call(this)
-			this.el.setAttribute('com', this.constructor.name)
-			this.el.setAttribute('iid', this.iid)
-		}
+/** 
+ * For localhost debugging.
+ * `debug_xxx` functions should be eliminated in production mode.
+ */
+(function debug_component() {
+	let original = (Component as any).prototype.onCreated;
+	
+	(Component as any).prototype.onCreated = function() {
+		original.call(this)
+		this.el.setAttribute('com', this.constructor.name)
+		this.el.setAttribute('iid', this.iid)
 	}
 })()

@@ -37,7 +37,7 @@ export class Template<A extends any[] = any[]> implements Part {
 	 * If `maker` is `null`, normally create template from `new Template(...)`,
 	 * not `Maker.make(...)`. then can only update by `slot.updateTemplateOnly(...)`.
 	 */
-	constructor(initResult: TemplateInitResult, maker: TemplateMaker | null = null, context: any = null) {
+	constructor(initResult: TemplateInitResult, maker: TemplateMaker | null, context: any) {
 		this.maker = maker
 		this.context = context
 

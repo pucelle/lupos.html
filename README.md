@@ -157,6 +157,12 @@ Note you may need to set `"moduleResolution": "Bundler"` in `tsconfig.json` to i
 
 
 
+## Production
+
+You should config your bundle tool to eliminate function call `debug_component`.
+
+
+
 ## More about
 
 **lupos.html** was inspired by [lit-html](https://lit-html.polymer-project.org/) and [svelte](https://svelte.dev/).
