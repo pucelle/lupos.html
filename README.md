@@ -53,6 +53,13 @@ export class Checkbox extends Component {
 
 ## APIs
 
+- **Slot Contents within ${...}**:
+	- `html...`: as HTML content.
+	- `Array of html...`: as a list of HTML contents.
+	- `Text`: as a text content.
+	- `Node`: as a HTML node to move here.
+	- `Promise<AnyContentAbove>`: update content after resolved it. Note you should ensure the async content visits all trackable properties before any `await`, after which the properties visiting will never be tracked.
+
 - **Bindings**:
 	- `:class`: bind element class names.
 	- `:crossFadePair` bind an element to provide bounding rect for later crossfade transition.
@@ -63,12 +70,12 @@ export class Checkbox extends Component {
 	- `class newBinding implements Binding {...}`: to declare a new binding.
 
 - **Blocks**
-	- **await**: await a promise expression, switch to `then` after promise resolved, or `<catch>` after promise rejected.
+	- **await**: await an async render result, update with it after it resolved, and will show default content before it get resolved.
 		```html
-		<lu:await ${...}>...</lu:await>
-		<lu:then>...</lu:then>
-		<lu:catch>...</lu:catch>
+		<lu:await ${AsyncContent}>DefaultContent</lu:await>
 		```
+		Note you should ensure the `AsyncContent` visits all trackable properties before any `await`, after which the properties visiting will never be tracked.
+
 	- **DynamicComponent**: decide which component to render in runtime.
 		```html
 		<${DynamicComponent} />

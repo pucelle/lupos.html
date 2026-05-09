@@ -195,6 +195,6 @@ function toDecimal(number: number, decimalCount: number): number {
 /** Get `cubic-bezier(...)` or `linear` as CSS easing name. */
 export function getCSSEasingValue(easing: WebTransitionEasingName): string {
 	return CubicBezierEasingParameters.hasOwnProperty(easing)
-		? 'cubic-bezier(' + CubicBezierEasingParameters[easing as keyof typeof CubicBezierEasingParameters].join(', ') + ')'
+		? 'cubic-bezier(' + CubicBezierEasingParameters[easing as keyof typeof CubicBezierEasingParameters].join(',') + ')'
 		: easing
 }

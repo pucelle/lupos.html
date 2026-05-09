@@ -9,6 +9,10 @@ import {CompiledTemplateResult, TemplateMaker, TemplateSlot} from '../template'
  *     Default Content
  *  </lu:await>
  * ```
+ * 
+ * Note you should ensure the `AsyncContent` visits
+ * all trackable properties before any `await`, after which
+ * the visiting will never be tracked.
  */
 export class AwaitBlock {
 
