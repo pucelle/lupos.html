@@ -705,7 +705,7 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
  * For localhost debugging.
  * `debug_xxx` functions should be eliminated in production mode.
  */
-(function debug_component() {
+(function debug_components() {
 	let original = (Component as any).prototype.onCreated;
 	
 	(Component as any).prototype.onCreated = function() {

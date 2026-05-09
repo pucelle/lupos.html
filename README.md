@@ -159,7 +159,7 @@ Note you may need to set `"moduleResolution": "Bundler"` in `tsconfig.json` to i
 
 ## Production
 
-You should config your bundle tool to eliminate function call `debug_component`.
+You should config your bundle tool to eliminate function call `debug_components`.
 
 
 
