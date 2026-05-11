@@ -59,6 +59,7 @@ export class HydrateHTMLLocator {
 	/** The ranged nodes of specified id. */
 	private rangedNodesMap: Map<string, ChildNode[]> = new Map()
 
+	/** Note `hydrateNodes` should have at least one element. */
 	constructor(template: HTMLTemplateElement, hydrateNodes: ArrayLike<ChildNode>) {
 		this.hydrateNodes = hydrateNodes
 

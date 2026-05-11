@@ -263,7 +263,9 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	protected initContentSlot(hydrationNeeded: boolean): TemplateSlot {
 		let position = new SlotPosition<SlotPositionType.AfterContent>(SlotPositionType.AfterContent, this.el)
 		let Com = this.constructor as ComponentConstructor
-		let hydrateNodes = hydrationNeeded ? this.el.childNodes : undefined
+
+		// Note here `hydrateNodes` should have at least one element if provided.
+		let hydrateNodes = hydrationNeeded && this.el.childNodes.length > 0 ? this.el.childNodes : undefined
 
 		return new TemplateSlot(position, Com.SlotContentType, hydrateNodes)
 	}
@@ -710,6 +712,7 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	
 	(Component as any).prototype.onCreated = function() {
 		original.call(this)
+
 		this.el.setAttribute('com', this.constructor.name)
 		this.el.setAttribute('iid', this.iid)
 	}

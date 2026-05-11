@@ -16,9 +16,9 @@ export class HydrateNodesSplitter {
 	/** Split nodes for a compiled template result */
 	split(tr: CompiledTemplateResult): ChildNode[] | undefined {
 			
-		// Generate a empty template, then reuse it.
+		// Generate a empty template, not update, then compare elements bone.
 		if (!this.template || !this.template.canUpdateBy(tr)) {
-			this.template = tr.maker.make(tr.values)
+			this.template = tr.maker.make(tr.context)
 		}
 
 		let hIndex = this.fromIndex

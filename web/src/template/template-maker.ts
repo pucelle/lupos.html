@@ -38,7 +38,10 @@ export class TemplateMaker {
 		this.init = init
 	}
 
-	/** Bind with a context to create a Template. */
+	/** 
+	 * Bind with a context to create a Template.
+	 * Note `hydrateNodes` should have at least one element if provided.
+	 */
 	make(context: any, hydrateNodes?: ArrayLike<ChildNode>): Template {
 		return new Template(this.init(context, hydrateNodes), this, context)
 	}

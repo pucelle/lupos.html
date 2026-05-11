@@ -47,6 +47,7 @@ export class SSR {
 
 		global.window = win
 		global.document = win.document
+		global.devicePixelRatio = 1
 
 		if (global.navigator) {
 			Object.defineProperty(window, 'navigator', {
@@ -180,7 +181,7 @@ export class SSR {
 	}
 
 	private formatHTML(html: string) {
-		return html.replace(/ (com|html|ssr)=""(?=[^<>]*>)/g, ' $1')
+		return html.replace(/ (com|html|ssr)="\w*"(?=[^<>]*>)/g, ' $1')
 	}
 
 	/** 
@@ -223,7 +224,9 @@ export class SSR {
 	async toString(): Promise<string> {
 		this.connectCustomElements(this.document.body)
 		await UpdateQueue.untilAllComplete()
-		return this.document.toString()
+
+		let output = this.document.toString()
+		return output
 	}
 
 	private connectCustomElements(root: Node) {

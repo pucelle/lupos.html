@@ -25,6 +25,7 @@ export const enum SlotContentType {
  * A `TemplateSlot` locate a slot position `>${...}<` inside a template  literal,
  * it helps to update content of the slot.
  * Must know the content type of slot, otherwise use `DynamicTypedTemplateSlot`.
+ * Note `hydrateNodes` should have at least one element if provided.
  */
 export class TemplateSlot<T extends SlotContentType | null = SlotContentType | null> implements Part {
 

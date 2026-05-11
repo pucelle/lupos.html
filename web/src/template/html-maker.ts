@@ -26,7 +26,7 @@ export class HTMLMaker {
 		}
 	}
 
-	/** `hydrateNodes` has at least one node. */
+	/** Note `hydrateNodes` should have at least one element if provided. */
 	make(hydrateNodes: ArrayLike<ChildNode> | undefined): HTMLLocator | HydrateHTMLLocator {
 		if (!this.template) {
 			this.initTemplate()
