@@ -1,6 +1,7 @@
 import {UpdateQueue} from 'lupos'
 import {PerFrameTransition, PerFrameTransitionOptions} from './per-frame-transition'
 import {WebTransition, WebTransitionKeyFrame, WebTransitionOptions} from './web-transition'
+import {inSSR} from '../ssr'
 
 
 /** 
@@ -186,6 +187,10 @@ export class Transition {
 	 * It will wait for update complete then reading dom properties.
 	 */
 	async enter(result: TransitionResult): Promise<boolean> {
+		if (inSSR) {
+			return true
+		}
+
 		let {phase} = result.options
 		if (phase === 'leave' || phase === 'none') {
 			return false
@@ -220,6 +225,10 @@ export class Transition {
 	 * It will wait for update complete then reading dom properties.
 	 */
 	async leave(result: TransitionResult): Promise<boolean> {
+		if (inSSR) {
+			return true
+		}
+		
 		let {phase} = result.options
 		if (phase === 'enter' || phase === 'none') {
 			return false
