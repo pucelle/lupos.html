@@ -139,9 +139,8 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 			let newContentType = this.identifyContentType(value)
 			if (newContentType !== this.contentType) {
 				this.clearContent()
+				this.contentType = newContentType
 			}
-
-			this.contentType = newContentType
 		}
 
 		if (this.hydrateNodes) {
@@ -218,10 +217,10 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 			return SlotContentType.TemplateResultList as T
 		}
 		else if (value instanceof Node) {
-			return SlotContentType.Promise as T
+			return SlotContentType.Node as T
 		}
 		else if (value instanceof Promise) {
-			return SlotContentType.Node as T
+			return SlotContentType.Promise as T
 		}
 		else {
 			return SlotContentType.Text as T
