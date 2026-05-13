@@ -105,6 +105,8 @@ export class HydrateHTMLLocator {
 				// Handle component. 
 				else if ((tNode as Element).hasAttribute('com')) {
 					willHydrate(hNode as Element)
+					
+					this.patchElementProperties(tNode as Element, hNode as Element)
 
 					if (tNode.childNodes.length > 0) {
 						this.patchRestSlotNodes(tNode as Element, hNode as Element)
