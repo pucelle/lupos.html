@@ -239,7 +239,7 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 		) {
 			this.removeTemplate(this.content as Template)
 		}
-		else {
+		else if (this.contentType === SlotContentType.TemplateResult) {
 			let ts = this.content as Template[]
 
 			for (let i = 0; i < ts.length; i++) {
@@ -455,7 +455,7 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 				}
 			}
 
-			this.contentType = SlotContentType.TemplateResult as T
+			this.contentType = newT ? SlotContentType.TemplateResult as T : null
 			this.content = newT
 		}
 	}
