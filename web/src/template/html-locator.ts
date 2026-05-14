@@ -50,8 +50,8 @@ export class HydrateHTMLLocator {
 	/** The template element to store all child nodes. */
 	el: HTMLTemplateElement
 	
-	/** Nodes to hydrate. */
-	private hydrateNodes: ArrayLike<ChildNode>
+	/** Nodes after hydrated. */
+	private hydratedNodes: ChildNode[]
 
 	/** The comment map to store comments by id. */
 	private markerMap: Map<string, Comment> = new Map()
@@ -61,16 +61,16 @@ export class HydrateHTMLLocator {
 
 	/** Note `hydrateNodes` should have at least one element. */
 	constructor(template: HTMLTemplateElement, hydrateNodes: ArrayLike<ChildNode>) {
-		this.hydrateNodes = hydrateNodes
+		this.hydratedNodes = new Array(template.content.childNodes.length)
 
 		// Initialize an empty template container.
 		this.el = document.createElement('template')
 
 		// Patch to SSR nodes.
-		this.patchNodesRecursively(template.content.childNodes, hydrateNodes)
+		this.patchNodesRecursively(template.content.childNodes, hydrateNodes, 0)
 	}
 
-	private patchNodesRecursively(templateNodes: ArrayLike<ChildNode>, hydrateNodes: ArrayLike<ChildNode>) {
+	private patchNodesRecursively(templateNodes: ArrayLike<ChildNode>, hydrateNodes: ArrayLike<ChildNode>, depth: number) {
 		let hIndex = 0
 		let latestHNode = hydrateNodes[0]
 
@@ -109,7 +109,7 @@ export class HydrateHTMLLocator {
 					this.patchElementProperties(tNode as Element, hNode as Element)
 
 					if (tNode.childNodes.length > 0) {
-						this.patchRestSlotNodes(tNode as Element, hNode as Element)
+						this.patchRestSlotNodes(tNode as Element, hNode as Element, depth)
 					}
 				}
 
@@ -119,7 +119,7 @@ export class HydrateHTMLLocator {
 
 					// Skip elements which will apply `:html`. 
 					if (!(tNode as Element).hasAttribute('html')) {
-						this.patchChildNodesRecursively(tNode, hNode)
+						this.patchChildNodesRecursively(tNode, hNode, depth)
 					}
 				}
 			}
@@ -160,6 +160,10 @@ export class HydrateHTMLLocator {
 				}
 			}
 
+			if (depth === 0) {
+				this.hydratedNodes[hIndex] = hNode
+			}
+			
 			latestHNode = hNode
 			hIndex++
 		}
@@ -171,14 +175,14 @@ export class HydrateHTMLLocator {
 	}
 
 	/** Patch for rest slot nodes. */
-	private patchRestSlotNodes(tNode: Element, hNode: Element) {
+	private patchRestSlotNodes(tNode: Element, hNode: Element, depth: number) {
 
 		// Locate hydrated rest slot contents.
 		let restSlotMarkerId = tNode.firstChild!.textContent!
 		let restSlotMarker = this.walkAndFindMarker(hNode, restSlotMarkerId)
 
 		if (restSlotMarker) {
-			this.patchNodesRecursively(tNode.childNodes, restSlotMarker.parentElement!.childNodes)
+			this.patchNodesRecursively(tNode.childNodes, restSlotMarker.parentElement!.childNodes, depth + 1)
 		}
 
 		// We make a new empty template to cache cloned nodes,
@@ -219,7 +223,7 @@ export class HydrateHTMLLocator {
 	}
 
 	/** Can handle when `hNode` have no child nodes. */
-	private patchChildNodesRecursively(tNode: Node, hNode: Node) {
+	private patchChildNodesRecursively(tNode: Node, hNode: Node, depth: number) {
 
 		// Empty text node will be removed.
 		if (hNode.childNodes.length === 0) {
@@ -232,7 +236,7 @@ export class HydrateHTMLLocator {
 
 		// Skip both have no child nodes.
 		else if (hNode.childNodes.length > 0) {
-			this.patchNodesRecursively(tNode.childNodes, hNode.childNodes)
+			this.patchNodesRecursively(tNode.childNodes, hNode.childNodes, depth + 1)
 		}
 	}
 
@@ -329,7 +333,7 @@ export class HydrateHTMLLocator {
 	}
 
 	childAt(index: number) {
-		return this.hydrateNodes[index]
+		return this.hydratedNodes[index]
 	}
 
 	getMarker(id: string): Comment {
