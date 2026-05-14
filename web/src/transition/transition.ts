@@ -4,27 +4,6 @@ import {WebTransition, WebTransitionKeyFrame, WebTransitionOptions} from './web-
 import {inSSR} from '../ssr'
 
 
-/** 
- * Base transition options for `Transition`.
- * Note some easing name like `ease-in-elastic` is not available for web type transition.
- */
-export interface TransitionOptions extends PerFrameTransitionOptions {
-	
-	/** 
-	 * Specifies transition phase.
-	 * E.g., if specifies to `enter` and need to play leave transition, nothing happens.
-	 * Default value is `both`.
-	 */
-	phase?: TransitionPhase
-}
-
-/** 
- * Transition phase limit, includes enter and leave part.
- * Only phase is allowed the transition can play.
- */
-export type TransitionPhase = 'enter' | 'leave' | 'both' | 'none'
-
-
 export interface WebTransitionProperties extends PerFrameTransitionOptions {
 
 	/** 
@@ -73,14 +52,14 @@ export type TransitionProperties = WebTransitionProperties
  * 
  * Normally you should choose returning `startFrame` and `endFrame` to use web transition.
  */
-export type TransitionPropertiesGetter<E extends Element, O extends TransitionOptions | undefined>
+export type TransitionPropertiesGetter<E extends Element, O extends PerFrameTransitionOptions | undefined>
 	= (el: E, options: O, phase: 'enter' | 'leave') => TransitionProperties | null | Promise<TransitionProperties | null>
 
 /** 
  * Calls `Transition.define` returned.
  * Give it to a `new Transition` can play it.
  */
-export type DefinedTransition<E extends Element = Element, O extends TransitionOptions = TransitionOptions>
+export type DefinedTransition<E extends Element = Element, O extends PerFrameTransitionOptions = PerFrameTransitionOptions>
 	= (options?: O) => TransitionResult<E, O>
 
 
@@ -88,7 +67,7 @@ export type DefinedTransition<E extends Element = Element, O extends TransitionO
  * Intermediate class generate from instantiating a defined transition.
  * It caches options for later playing.
  */
-export class TransitionResult<E extends Element = Element, O extends TransitionOptions = any>{
+export class TransitionResult<E extends Element = Element, O extends PerFrameTransitionOptions = any>{
 
 	readonly getter: TransitionPropertiesGetter<E, O>
 	readonly options: O
@@ -135,7 +114,7 @@ export class Transition {
 	 * Note uses `defineTransition` cause executing codes in top level,
 	 * so you may need to set `sideEffects: false` to make tree shaking work as expected.
 	 */
-	static define<E extends Element, O extends TransitionOptions>(
+	static define<E extends Element, O extends PerFrameTransitionOptions>(
 		getter: TransitionPropertiesGetter<E, O>
 	): (options?: O) => TransitionResult<E, O>
 	{
@@ -191,11 +170,6 @@ export class Transition {
 			return true
 		}
 
-		let {phase} = result.options
-		if (phase === 'leave' || phase === 'none') {
-			return false
-		}
-
 		if (!await this.prepareTransitions('enter', result)) {
 			return false
 		}
@@ -227,11 +201,6 @@ export class Transition {
 	async leave(result: TransitionResult): Promise<boolean> {
 		if (inSSR) {
 			return true
-		}
-		
-		let {phase} = result.options
-		if (phase === 'enter' || phase === 'none') {
-			return false
 		}
 
 		if (!await this.prepareTransitions('leave', result)) {

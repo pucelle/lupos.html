@@ -1,8 +1,9 @@
-import {TransitionOptions, Transition} from '../transition'
+import {PerFrameTransitionOptions} from '../per-frame-transition'
+import {Transition} from '../transition'
 import {WebTransitionKeyFrame} from '../web-transition'
 
 
-export interface FrameRangeTransitionOptions extends TransitionOptions {
+export interface FrameRangeTransitionOptions extends PerFrameTransitionOptions {
 
 	/** 
 	 * Start frame, specifies the start state of enter or end state of leave.

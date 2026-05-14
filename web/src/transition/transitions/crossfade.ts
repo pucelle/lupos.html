@@ -1,10 +1,11 @@
 import {UpdateQueue} from 'lupos'
-import {TransitionOptions, TransitionResult, Transition, WebTransitionProperties} from '../transition'
+import {TransitionResult, Transition, WebTransitionProperties} from '../transition'
 import {assignWithoutKeys} from './utils'
 import {InternalPairKeysListMap} from '../../structs/map'
+import {PerFrameTransitionOptions} from '../per-frame-transition'
 
 
-export interface CrossFadeTransitionOptions extends TransitionOptions {
+export interface CrossFadeTransitionOptions extends PerFrameTransitionOptions {
 
 	/** The key to match a pair of elements. */
 	key: any

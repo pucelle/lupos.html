@@ -266,18 +266,28 @@ export class HydrateHTMLLocator {
 	}
 
 	/** Walk and build markers map. */
-	private walkAndMapMarkers(node: Element | DocumentFragment) {
-		let walker = document.createTreeWalker(
-			node, 
-			NodeFilter.SHOW_COMMENT,
-			null
-		)
-
-		let currentNode
-		while (currentNode = walker.nextNode()) {
-			let id = (currentNode as Comment).textContent
+	private walkAndMapMarkers(node: Node) {
+		if (node.nodeType === Node.COMMENT_NODE) {
+			let id = (node as Comment).textContent
 			if (id) {
-				this.markerMap.set(id, currentNode as Comment)
+				this.markerMap.set(id, node as Comment)
+			}
+		}
+		else if (node.nodeType === Node.ELEMENT_NODE
+			|| node.nodeType === Node.DOCUMENT_FRAGMENT_NODE
+		) {	
+			let walker = document.createTreeWalker(
+				node, 
+				NodeFilter.SHOW_COMMENT,
+				null
+			)
+
+			let currentNode
+			while (currentNode = walker.nextNode()) {
+				let id = (currentNode as Comment).textContent
+				if (id) {
+					this.markerMap.set(id, currentNode as Comment)
+				}
 			}
 		}
 	}

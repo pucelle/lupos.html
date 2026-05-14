@@ -3,6 +3,39 @@ import {Binding} from './types'
 import {Part, PartCallbackParameterMask} from '../part'
 
 
+/** 
+ * Base transition options for `Transition`.
+ * Note some easing name like `ease-in-elastic` is not available for web type transition.
+ */
+export interface TransitionOptions {
+	
+	/** 
+	 * Specifies transition phase.
+	 * E.g., if specifies to `enter` and need to play leave transition, nothing happens.
+	 * Default value is `both`.
+	 */
+	phase?: TransitionPhase
+
+	/**
+	 * Whether play transition immediately after element get initialized.
+	 * Default value is `false`.
+	 */
+	immediate?: boolean
+
+	/**
+	 * Whether play transition when element or any ancestral element get inserted or removed.
+	 * Default value is `false`.
+	 */
+	global?: boolean
+}
+
+/** 
+ * Transition phase limit, includes enter and leave part.
+ * Only phase is allowed the transition can play.
+ */
+export type TransitionPhase = 'enter' | 'leave' | 'both' | 'none'
+
+
 /** Cache those bindings that haven't trigger connect callback yet. */
 const NotConnectCallbackForFirstTime: WeakSet<TransitionBinding> = /*#__PURE__*/new WeakSet()
 
@@ -23,28 +56,28 @@ const NotConnectCallbackForFirstTime: WeakSet<TransitionBinding> = /*#__PURE__*/
  */
 export class TransitionBinding implements Binding, Part {
 
-	private readonly el: Element
+	protected readonly el: Element
+	protected result: TransitionResult | null | (() => TransitionResult | null) = null
+	protected phase: TransitionPhase = 'both'
+	protected immediate: boolean = false
+	protected global: boolean = false
+	protected transition: Transition
 
-	/** 
-	 * A `local` transition as default action,
-	 * can only play when attached elements been directly inserted or removed.
-	 * A `global` transition can play when any level of ancestral element get inserted or removed.
-	 */
-	private global: boolean = false
-
-	/** 
-	 * By default, transition cant play when get initialized.
-	 * But set `immediate` can make it play.
-	 */
-	private immediate: boolean = false
-
-	private result: TransitionResult | null | (() => TransitionResult | null) = null
-	private transition: Transition
-
-	constructor(el: Element, _context: any, modifiers: ('global' | 'local' | 'immediate')[] = []) {
+	constructor(el: Element, _context: any, modifiers: ('global' | 'immediate' | 'enter' | 'leave')[] | null = null) {
 		this.el = el
-		this.global = modifiers.includes('global')
-		this.immediate = modifiers.includes('immediate')
+
+		if (modifiers) {
+			this.global = modifiers.includes('global')
+			this.immediate = modifiers.includes('immediate')
+
+			if (modifiers.includes('enter')) {
+				this.phase = 'enter'
+			}
+			else if (modifiers.includes('leave')) {
+				this.phase = 'leave'
+			}
+		}
+
 		this.transition = new Transition(this.el)
 
 		NotConnectCallbackForFirstTime.add(this)
@@ -68,6 +101,10 @@ export class TransitionBinding implements Binding, Part {
 		}
 
 		if (this.global || (param & PartCallbackParameterMask.AsDirectNode) > 0) {
+			if (this.phase === 'leave' || this.phase === 'none') {
+				return
+			}
+
 			this.enter()
 		}
 	}
@@ -81,16 +118,34 @@ export class TransitionBinding implements Binding, Part {
 		}
 
 		if (this.global || (param & PartCallbackParameterMask.AsDirectNode) > 0) {
+			if (this.phase === 'enter' || this.phase === 'none') {
+				return
+			}
+
 			return this.leave() as Promise<void> | void
 		}
 	}
 
-	update(result: TransitionResult | null | (() => TransitionResult | null)) {
+	update(result: TransitionResult | null | (() => TransitionResult | null), options?: TransitionOptions) {
 		this.result = result
 
 		// Cancel transition immediately if transition value becomes `null`.
 		if (!this.result) {
 			this.transition.cancel()
+		}
+
+		if (options) {
+			if (options.global !== undefined) {
+				this.global = options.global
+			}
+
+			if (options.immediate !== undefined) {
+				this.immediate = options.immediate
+			}
+
+			if (options.phase !== undefined) {
+				this.phase = options.phase
+			}
 		}
 	}
 

@@ -16,8 +16,8 @@ type ClassObject = Record<string, any>
  */
 export class ClassBinding implements Binding {
 
-	private readonly el: Element
-	private lastClassNames: string[] = []
+	protected readonly el: Element
+	protected lastClassNames: string[] = []
 
 	/** Modifier `className` of `:class.className` will be replaced by compiler. */
 	constructor(el: Element) {

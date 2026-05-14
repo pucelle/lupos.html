@@ -1,8 +1,9 @@
-import {TransitionOptions, TransitionProperties, Transition} from '../transition'
+import {PerFrameTransitionOptions} from '../per-frame-transition'
+import {TransitionProperties, Transition} from '../transition'
 import {assignWithoutKeys} from './utils'
 
 
-export interface BlurTransitionOptions extends TransitionOptions {
+export interface BlurTransitionOptions extends PerFrameTransitionOptions {
 
 	/** 
 	 * CSS filter blur radius, can be number, or css value with unit.

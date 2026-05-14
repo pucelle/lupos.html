@@ -28,17 +28,17 @@ const enum RefType {
  */
 export class RefBinding implements Binding, Part {
 
-	private readonly el: Element
-	private readonly context: any
+	protected readonly el: Element
+	protected readonly context: any
 
 	/** Whether reference element, or component, or binding. */
-	private refType: RefType = RefType.Element
+	protected refType: RefType = RefType.Element
 	
 	/** Compiler will compile `this.prop` -> `r => this.prop = r` */
-	private refFn: ((value: any) => void) | null = null
+	protected refFn: ((value: any) => void) | null = null
 
 	/** Whether has been referenced. */
-	private refed: boolean = false
+	protected refed: boolean = false
 
 	constructor(el: Element, context: any, modifiers: ('el' | 'com' | 'binding')[] = []) {
 		this.el = el
@@ -57,7 +57,7 @@ export class RefBinding implements Binding, Part {
 		this.refFn = refFn
 	}
 
-	private doReference() {
+	protected doReference() {
 		if (this.refType === RefType.Element) {
 			this.refFn!.call(this.context, this.el)
 		}

@@ -1,8 +1,9 @@
-import {Transition, TransitionOptions, TransitionProperties} from '../transition'
+import {PerFrameTransitionOptions} from '../per-frame-transition'
+import {Transition, TransitionProperties} from '../transition'
 import {assignWithoutKeys} from './utils'
 
 
-export interface FlyTransitionOptions extends TransitionOptions {
+export interface FlyTransitionOptions extends PerFrameTransitionOptions {
 
 	/** 
 	 * The x value specifies the translated in x axis before enter or after leave.

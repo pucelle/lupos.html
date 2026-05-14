@@ -1,8 +1,9 @@
-import {TransitionOptions, TransitionProperties, Transition} from '../transition'
+import {PerFrameTransitionOptions} from '../per-frame-transition'
+import {TransitionProperties, Transition} from '../transition'
 import {assignWithoutKeys} from './utils'
 
 
-export interface DrawTransitionOptions extends TransitionOptions {
+export interface DrawTransitionOptions extends PerFrameTransitionOptions {
 
 	/** 
 	 * Set `duration` by path length, `duration = length / speed`.

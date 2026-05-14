@@ -14,8 +14,8 @@ import {Binding} from './types'
  */
 export class StyleBinding implements Binding {
 
-	private readonly el: HTMLElement | SVGElement
-	private lastStyleValues: Record<string, string> = {}
+	protected readonly el: HTMLElement | SVGElement
+	protected lastStyleValues: Record<string, string> = {}
 
 	/** Modifiers like `px`, `percent`, `url` was replaced by compiler. */
 	constructor(el: Element) {
@@ -42,7 +42,7 @@ export class StyleBinding implements Binding {
 	}
 
 	/** Parse style string to object. */
-	private parseStyleString(value: string) {
+	protected parseStyleString(value: string) {
 		let o: Record<string, string> = {}
 
 		for (let item of value.split(/\s*;\s*/)) {

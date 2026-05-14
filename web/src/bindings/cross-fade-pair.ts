@@ -10,9 +10,9 @@ import {Part} from '../part'
  */
 export class crossFadePair implements Binding, Part {
 
-	private readonly el: Element
-	private key: any | null = null
-	private connected: boolean = false
+	protected readonly el: Element
+	protected key: any | null = null
+	protected connected: boolean = false
 
 	constructor(el: Element) {
 		this.el = el

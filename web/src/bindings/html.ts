@@ -10,8 +10,8 @@ import {Binding} from './types'
  */
 export class HTMLBinding implements Binding {
 
-	private readonly el: HTMLElement
-	private htmlRendered: boolean
+	protected readonly el: HTMLElement
+	protected htmlRendered: boolean
 
 	constructor(el: Element) {
 		this.el = el as HTMLElement

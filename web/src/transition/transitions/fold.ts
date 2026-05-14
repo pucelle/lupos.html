@@ -1,8 +1,9 @@
-import {TransitionOptions, Transition, TransitionProperties} from '../transition'
+import {PerFrameTransitionOptions} from '../per-frame-transition'
+import {Transition, TransitionProperties} from '../transition'
 import {assignWithoutKeys} from './utils'
 
 
-export interface FoldTransitionOptions extends TransitionOptions {
+export interface FoldTransitionOptions extends PerFrameTransitionOptions {
 
 	/** 
 	 * Fold on vertical or horizontal direction.
