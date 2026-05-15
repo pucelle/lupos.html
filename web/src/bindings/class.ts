@@ -17,7 +17,7 @@ type ClassObject = Record<string, any>
 export class ClassBinding implements Binding {
 
 	protected readonly el: Element
-	protected lastClassNames: string[] = []
+	protected lastClassNames: string[] | null = null
 
 	/** Modifier `className` of `:class.className` will be replaced by compiler. */
 	constructor(el: Element) {
@@ -40,6 +40,7 @@ export class ClassBinding implements Binding {
 	 * For compiling:
 	 * - `:class="abc"`.
 	 * - `:class=${value}` and `value` is inferred as object type.
+	 * Note string type class name is not hydrate-able.
 	 */
 	updateString(value: string) {
 		let names = value.split(/\s+/)
@@ -54,30 +55,50 @@ export class ClassBinding implements Binding {
 	updateObject(value: ClassObject) {
 		let names: string[] = []
 
-		for (let key of Object.keys(value as any)) {
-			if ((value as any)[key]) {
-				names.push(key)
+		if (this.lastClassNames) {
+			for (let key of Object.keys(value as any)) {
+				if ((value as any)[key]) {
+					names.push(key)
+				}
 			}
+
+			this.updateList(names)
 		}
 
-		this.updateList(names)
+		// For hydration, still remove specified class name if value is `false`.
+		else {
+			for (let key of Object.keys(value as any)) {
+				if ((value as any)[key]) {
+					this.el.classList.add(key)
+					names.push(key)
+				}
+				else {
+					this.el.classList.remove(key)
+				}
+			}
+
+			this.lastClassNames = names
+		}
 	}
 
 	/** 
 	 * For compiling:
 	 * - `:class=${value}` and `value` is inferred as array type.
+	 * Note list type class name is not hydrate-able.
 	 */
 	updateList(value: string[]) {
 		value = value.filter(v => v)
 
-		for (let name of this.lastClassNames) {
-			if (!value.includes(name)) {
-				this.el.classList.remove(name)
+		if (this.lastClassNames) {
+			for (let name of this.lastClassNames) {
+				if (!value.includes(name)) {
+					this.el.classList.remove(name)
+				}
 			}
 		}
 
 		for (let name of value) {
-			if (!this.lastClassNames.includes(name)) {
+			if (!this.lastClassNames || !this.lastClassNames.includes(name)) {
 				this.el.classList.add(name)
 			}
 		}

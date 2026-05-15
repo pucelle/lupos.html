@@ -15,7 +15,7 @@ import {Binding} from './types'
 export class StyleBinding implements Binding {
 
 	protected readonly el: HTMLElement | SVGElement
-	protected lastStyleValues: Record<string, string> = {}
+	protected lastStyleValues: Record<string, string> | null = null
 
 	/** Modifiers like `px`, `percent`, `url` was replaced by compiler. */
 	constructor(el: Element) {
@@ -59,14 +59,17 @@ export class StyleBinding implements Binding {
 	 * - `:style=${value}` and `value` is inferred as array type.
 	 */
 	updateObject(value: Record<string, string>) {
-		for (let k of Object.keys(this.lastStyleValues)) {
-			if (!value.hasOwnProperty(k)) {
-				this.el.style.setProperty(k, '')
+		if (this.lastStyleValues) {
+			for (let k of Object.keys(this.lastStyleValues)) {
+				if (!value.hasOwnProperty(k)) {
+					this.el.style.setProperty(k, '')
+				}
 			}
 		}
 
+		// Also support hydration here.
 		for (let [k, v] of Object.entries(value)) {
-			if (v !== this.lastStyleValues[k]) {
+			if (!this.lastStyleValues || v !== this.lastStyleValues[k]) {
 				this.el.style.setProperty(k, v)
 			}
 		}
