@@ -13,8 +13,8 @@ export class SlotPositionMap {
 	 * It's equivalent to a double linked list.
 	 * Can also use `TwoWayMap`, but use two maps independently can avoid some useless operations.
 	 */
-	private tpMap: Map<Template, SlotPosition> = new Map()
-	private ptMap: Map<SlotPosition, Template> = new Map()
+	private tpMap: WeakMap<Template, SlotPosition> = new WeakMap()
+	private ptMap: WeakMap<SlotPosition, Template> = new WeakMap()
 
 	/** After insert a template before a position, remember relative position. */
 	addPosition(template: Template<any>, position: SlotPosition) {

@@ -1,6 +1,6 @@
 import {Transition, TransitionResult} from '../transition'
 import {Binding} from './types'
-import {Part, PartCallbackParameterMask} from '../part'
+import {Part, PartCallbackParameterMask, PartConnectedState} from '../part'
 
 
 /** 
@@ -57,6 +57,7 @@ const NotConnectCallbackForFirstTime: WeakSet<TransitionBinding> = /*#__PURE__*/
 export class TransitionBinding implements Binding, Part {
 
 	protected readonly el: Element
+	protected connectedState: PartConnectedState = PartConnectedState.Disconnected
 	protected result: TransitionResult | null | (() => TransitionResult | null) = null
 	protected phase: TransitionPhase = 'both'
 	protected immediate: boolean = false
@@ -84,46 +85,99 @@ export class TransitionBinding implements Binding, Part {
 	}
 
 	afterConnectCallback(param: PartCallbackParameterMask | 0) {
-		this.cancel()
-
-		// Connect immediately manually, no need to play transition.
-		if (param & PartCallbackParameterMask.MoveImmediately) {
+		if (this.connectedState === PartConnectedState.Connected) {
 			return
 		}
 
+		if (this.shouldPlayEnter(param)) {
+			this.enter()
+		}
+
+		this.connectedState = PartConnectedState.Connected
+	}
+
+	/** Test whether should play enter transition. */
+	protected shouldPlayEnter(param: PartCallbackParameterMask | 0): boolean {
+
+		// Prevent first time enter transition playing if not `immediate`.
 		if (NotConnectCallbackForFirstTime.has(this)) {
 			NotConnectCallbackForFirstTime.delete(this)
 
-			// Prevent first time enter transition playing if not `immediate`.
 			if (!this.immediate) {
-				return
+				return false
 			}
 		}
 
+		// Connect immediately manually, no need to play transition.
+		if (param & PartCallbackParameterMask.MoveImmediately) {
+			return false
+		}
+
+		// Global, or as direct node when moving.
 		if (this.global || (param & PartCallbackParameterMask.AsDirectNode) > 0) {
 			if (this.phase === 'leave' || this.phase === 'none') {
-				return
+				return false
 			}
-
-			this.enter()
 		}
+
+		return true
 	}
 
 	beforeDisconnectCallback(param: PartCallbackParameterMask | 0): Promise<void> | void {
-		this.cancel()
-
-		// Ancestral element has been removed immediately, no need to play transition.
-		if (param & PartCallbackParameterMask.MoveImmediately) {
+		
+		// Already disconnected.
+		if (this.connectedState === PartConnectedState.Disconnected) {
 			return
 		}
 
+		let shouldPlay = this.shouldPlayLeave(param)
+
+		// When disconnecting, also broadcast it internally to pick up the promises.
+		if (this.connectedState === PartConnectedState.Disconnecting) {
+			if (shouldPlay) {
+				return this.transition.untilEnd() as Promise<any>
+			}
+			else {
+				return this.cancel()
+			}
+		}
+
+		if (shouldPlay) {
+			let promiseMay = this.leave()
+			if (promiseMay) {
+				this.connectedState = PartConnectedState.Disconnecting
+
+				return promiseMay.then(() => {
+					if (this.connectedState === PartConnectedState.Disconnecting) {
+						this.connectedState = PartConnectedState.Disconnected
+					}
+				})
+			}
+			else {
+				this.connectedState = PartConnectedState.Disconnected
+			}
+		}
+		else {
+			this.connectedState = PartConnectedState.Disconnected
+		}
+	}
+
+	/** Test whether should play leave transition. */
+	protected shouldPlayLeave(param: PartCallbackParameterMask | 0): boolean {
+
+		// Connect immediately manually, no need to play transition.
+		if (param & PartCallbackParameterMask.MoveImmediately) {
+			return false
+		}
+
+		// Global, or as direct node when moving.
 		if (this.global || (param & PartCallbackParameterMask.AsDirectNode) > 0) {
 			if (this.phase === 'enter' || this.phase === 'none') {
-				return
+				return false
 			}
-
-			return this.leave() as Promise<void> | void
 		}
+
+		return true
 	}
 
 	update(result: TransitionResult | null | (() => TransitionResult | null), options?: TransitionOptions) {

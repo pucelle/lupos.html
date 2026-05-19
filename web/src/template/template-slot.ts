@@ -1,7 +1,7 @@
 import {SlotPosition, SlotEndOuterPositionType} from './slot-position'
 import {Template} from './template'
 import {CompiledTemplateResult} from './template-result-compiled'
-import {Part, PartCallbackParameterMask} from '../part'
+import {Part, PartCallbackParameterMask, PartConnectedState} from '../part'
 import {NodeTemplateMaker, TextTemplateMaker} from './template-makers'
 import {TemplateMaker} from './template-maker'
 import {HydrateNodesSplitter} from './hydration-splitter'
@@ -33,7 +33,7 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 	 * Indicates whether connected to document.
 	 * Can also avoid calls content connect actions twice in update logic and connect callback.
 	 */
-	connected: boolean = false
+	connectedState: PartConnectedState = PartConnectedState.Disconnected
 
 	/** End outer position, indicates where to put new content. */
 	readonly endOuterPosition: SlotPosition<SlotEndOuterPositionType>
@@ -78,11 +78,11 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 	}
 
 	afterConnectCallback(param: PartCallbackParameterMask | 0) {
-		if (this.connected) {
+		if (this.connectedState === PartConnectedState.Connected) {
 			return
 		}
 
-		this.connected = true
+		this.connectedState = PartConnectedState.Connected
 
 		// May haven't get updated.
 		if (!this.content) {
@@ -100,14 +100,16 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 	}
 
 	beforeDisconnectCallback(param: PartCallbackParameterMask | 0): Promise<void> | void {
-		if (!this.connected) {
+		
+		// Already disconnected.
+		if (this.connectedState === PartConnectedState.Disconnected) {
 			return
 		}
 
-		this.connected = false
+		let promiseMay: Promise<void> | void = undefined
 
 		if (this.contentType === SlotContentType.TemplateResult) {
-			return (this.content as Template).beforeDisconnectCallback(param)
+			promiseMay = (this.content as Template).beforeDisconnectCallback(param)
 		}
 		else if (this.contentType === SlotContentType.TemplateResultList) {
 			let promises: Promise<void>[] = []
@@ -120,8 +122,29 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 			}
 
 			if (promises.length > 0) {
-				return Promise.all(promises) as Promise<any>
+				promiseMay = Promise.all(promises) as Promise<any>
 			}
+		}
+
+		// When disconnecting, also broadcast it internally to pick up the promises.
+		if (this.connectedState === PartConnectedState.Disconnecting) {
+			return promiseMay
+		}
+
+		// Wait for disconnecting.
+		else if (promiseMay) {
+			this.connectedState = PartConnectedState.Disconnecting
+
+			return promiseMay.then(() => {
+				if (this.connectedState === PartConnectedState.Disconnecting) {
+					this.connectedState = PartConnectedState.Disconnected
+				}
+			})
+		}
+
+		// Immediately disconnected.
+		else {
+			this.connectedState = PartConnectedState.Disconnected
 		}
 	}
 
@@ -163,7 +186,7 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 				this.promise = value as Promise<PrimitiveRenderResult>;
 
 				(value as Promise<PrimitiveRenderResult>).then(result => {
-					if (this.promise === value && this.connected) {
+					if (this.promise === value && this.connectedState === PartConnectedState.Connected) {
 						this.update(result)
 					}
 				})
@@ -197,7 +220,7 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 				this.promise = value as Promise<PrimitiveRenderResult>;
 
 				(value as Promise<PrimitiveRenderResult>).then(result => {
-					if (this.promise === value && this.connected) {
+					if (this.promise === value && this.connectedState === PartConnectedState.Connected) {
 						this.hydrate(result)
 					}
 				})
@@ -267,7 +290,7 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 			newT.insertNodesBefore(this.endOuterPosition)
 			newT.update(tr.values)
 
-			if (this.connected) {
+			if (this.connectedState === PartConnectedState.Connected) {
 				newT.afterConnectCallback(PartCallbackParameterMask.FromOwnStateChange | PartCallbackParameterMask.AsDirectNode)
 			}
 			
@@ -281,7 +304,7 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 		newT.hydrateNodesBefore(this.endOuterPosition)
 		newT.update(tr.values)
 
-		if (this.connected) {
+		if (this.connectedState === PartConnectedState.Connected) {
 			newT.afterConnectCallback(PartCallbackParameterMask.FromOwnStateChange | PartCallbackParameterMask.AsDirectNode)
 		}
 		
@@ -314,7 +337,7 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 				this.insertTemplate(newT, nextOldT)
 				newT.update(tr.values)
 
-				if (this.connected) {
+				if (this.connectedState === PartConnectedState.Connected) {
 					newT.afterConnectCallback(PartCallbackParameterMask.FromOwnStateChange | PartCallbackParameterMask.AsDirectNode)
 				}
 
@@ -353,7 +376,7 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 
 			newT.update(result.values)
 
-			if (this.connected) {
+			if (this.connectedState === PartConnectedState.Connected) {
 				newT.afterConnectCallback(PartCallbackParameterMask.FromOwnStateChange | PartCallbackParameterMask.AsDirectNode)
 			}
 
@@ -450,7 +473,7 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 				newT.insertNodesBefore(this.endOuterPosition)
 				newT.update(values!)
 
-				if (this.connected) {
+				if (this.connectedState === PartConnectedState.Connected) {
 					newT.afterConnectCallback(PartCallbackParameterMask.FromOwnStateChange | PartCallbackParameterMask.AsDirectNode)
 				}
 			}

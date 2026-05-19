@@ -1,6 +1,6 @@
 import {SlotPosition, SlotStartInnerPositionType, SlotPositionType} from './slot-position'
 import {TemplateMaker, TemplateInitResult} from './template-maker'
-import {getTemplatePartParameter, Part, PartCallbackParameterMask, PartPositionType} from '../part'
+import {getTemplatePartParameter, Part, PartCallbackParameterMask, PartConnectedState, PartPositionType} from '../part'
 import {SlotPositionMap} from './slot-position-map'
 import {CompiledTemplateResult} from './template-result-compiled'
 
@@ -22,7 +22,7 @@ export class Template<A extends any[] = any[]> implements Part {
 	 * Required, a template may be appended and wait to call connect callback.
 	 * It may be then updated to be removed and call disconnect callback immediately.
 	 */
-	connected: boolean = false
+	protected connectedState: PartConnectedState = PartConnectedState.Disconnected
 
 	readonly el: HTMLTemplateElement
 	readonly maker: TemplateMaker | null
@@ -53,24 +53,24 @@ export class Template<A extends any[] = any[]> implements Part {
 	}
 
 	afterConnectCallback(param: PartCallbackParameterMask | 0) {
-		if (this.connected) {
+		if (this.connectedState === PartConnectedState.Connected) {
 			return
 		}
-		
-		this.connected = true
 
 		for (let [part, position] of this.parts) {
 			let partParam = getTemplatePartParameter(param, position)
 			part.afterConnectCallback(partParam)
 		}
+
+		this.connectedState = PartConnectedState.Connected
 	}
 
 	beforeDisconnectCallback(param: PartCallbackParameterMask | 0): Promise<void> | void {
-		if (!this.connected) {
+		
+		// Already disconnected.
+		if (this.connectedState === PartConnectedState.Disconnected) {
 			return
 		}
-
-		this.connected = false
 
 		let promises: Promise<void>[] = []
 
@@ -83,8 +83,29 @@ export class Template<A extends any[] = any[]> implements Part {
 			}
 		}
 
-		if (promises.length > 0) {
-			return Promise.all(promises) as Promise<any> 
+		let promiseMay: Promise<void> | void = promises.length > 0
+			? Promise.all(promises) as Promise<any>
+			: undefined
+
+		// When disconnecting, also broadcast it internally to pick up the promises.
+		if (this.connectedState === PartConnectedState.Disconnecting) {
+			return promiseMay
+		}
+
+		// Wait for disconnecting.
+		else if (promiseMay) {
+			this.connectedState = PartConnectedState.Disconnecting
+
+			return promiseMay.then(() => {
+				if (this.connectedState === PartConnectedState.Disconnecting) {
+					this.connectedState = PartConnectedState.Disconnected
+				}
+			})
+		}
+
+		// Immediately disconnected.
+		else {
+			this.connectedState = PartConnectedState.Disconnected
 		}
 	}
 

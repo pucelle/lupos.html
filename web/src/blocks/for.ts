@@ -1,6 +1,6 @@
 import {EditType, getEditRecord} from '../structs/edit'
 import {CompiledTemplateResult, HydrateNodesSplitter, Template, TemplateSlot} from '../template'
-import {PartCallbackParameterMask} from '../part'
+import {PartCallbackParameterMask, PartConnectedState} from '../part'
 
 
 /** 
@@ -133,7 +133,7 @@ export class ForBlock<T = any> {
 		t.update(result.values)
 
 		// `lu:for` use it's slot to cache child parts.
-		if (this.slot.connected) {
+		if (this.slot.connectedState === PartConnectedState.Connected) {
 			t.afterConnectCallback(PartCallbackParameterMask.FromOwnStateChange | PartCallbackParameterMask.AsDirectNode)
 		}
 
@@ -148,7 +148,7 @@ export class ForBlock<T = any> {
 	private reuseTemplate(t: Template, result: CompiledTemplateResult) {
 		t.update(result.values)
 		
-		if (this.slot.connected) {
+		if (this.slot.connectedState === PartConnectedState.Connected) {
 			t.afterConnectCallback(PartCallbackParameterMask.FromOwnStateChange | PartCallbackParameterMask.AsDirectNode)
 		}
 

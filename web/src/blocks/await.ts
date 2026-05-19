@@ -1,4 +1,5 @@
 import {RenderResult} from '../component'
+import {PartConnectedState} from '../part'
 import {CompiledTemplateResult, TemplateMaker, TemplateSlot} from '../template'
 
 
@@ -42,7 +43,7 @@ export class AwaitBlock {
 		this.updateDefault(values)
 		
 		promise.then((result: RenderResult) => {
-			if (promise === this.promise && this.slot.connected) {
+			if (promise === this.promise && this.slot.connectedState === PartConnectedState.Connected) {
 				this.updatePromised(result)
 			}
 		})

@@ -69,12 +69,27 @@ export interface Part {
 
 	/** 
 	 * Before node or any ancestral node of current part are going to be removed.
+	 * Please note `beforeDisconnectCallback` may be called for multiple times with
+	 * same or different parameters.
 	 * 
 	 * Will also broadcast disconnect calling recursively to all descendant parts.
 	 * 
 	 * - `param`: AND byte operate of `PartCallbackParameterMask`.
 	 */
 	beforeDisconnectCallback(param: PartCallbackParameterMask | 0): Promise<void> | void
+}
+
+/** Type of part position. */
+export const enum PartConnectedState {
+
+	/** Already disconnected. */
+	Disconnected = 0,
+
+	/** In disconnecting. */
+	Disconnecting = 1,
+
+	/** Connected. */
+	Connected = 2,
 }
 
 /** Type of part position. */
@@ -133,15 +148,15 @@ export function getTemplatePartParameter(param: PartCallbackParameterMask | 0, p
 /** It delegate a part, and this part itself may be deleted or appended again. */
 export class PartDelegator implements Part {
 
-	connected: boolean = false
-	private part: Part | null = null
+	protected connectedState: PartConnectedState = PartConnectedState.Disconnected
+	protected part: Part | null = null
 
 	update(part: Part | null) {
 		if (this.part === part) {
 			return
 		}
 
-		if (this.connected) {
+		if (this.connectedState === PartConnectedState.Connected) {
 			if (this.part) {
 				this.part.beforeDisconnectCallback(PartCallbackParameterMask.FromOwnStateChange | PartCallbackParameterMask.AsDirectNode)
 			}
@@ -155,7 +170,7 @@ export class PartDelegator implements Part {
 	}
 
 	afterConnectCallback(param: PartCallbackParameterMask | 0) {
-		if (this.connected) {
+		if (this.connectedState === PartConnectedState.Connected) {
 			return
 		}
 
@@ -163,19 +178,38 @@ export class PartDelegator implements Part {
 			this.part.afterConnectCallback(param | PartCallbackParameterMask.FromOwnStateChange)
 		}
 
-		this.connected = true
+		this.connectedState = PartConnectedState.Connected
 	}
 
-	beforeDisconnectCallback(param: PartCallbackParameterMask | 0) {
-		if (!this.connected) {
+	beforeDisconnectCallback(param: PartCallbackParameterMask | 0): Promise<void> | void {
+
+		// Already disconnected.
+		if (this.connectedState === PartConnectedState.Disconnected) {
 			return
 		}
 
 		// Must ensure part truly release, so should union `FromOwnStateChange`.
-		if (this.part) {
-			this.part.beforeDisconnectCallback(param | PartCallbackParameterMask.FromOwnStateChange)
+		let promise = this.part?.beforeDisconnectCallback(param | PartCallbackParameterMask.FromOwnStateChange)
+
+		// When disconnecting, also broadcast it internally to pick up the promises.
+		if (this.connectedState === PartConnectedState.Disconnecting) {
+			return promise
 		}
 
-		this.connected = false
+		// Wait for disconnecting.
+		else if (promise) {
+			this.connectedState = PartConnectedState.Disconnecting
+
+			return promise.then(() => {
+				if (this.connectedState === PartConnectedState.Disconnecting) {
+					this.connectedState = PartConnectedState.Disconnected
+				}
+			})
+		}
+
+		// Immediately disconnected.
+		else {
+			this.connectedState = PartConnectedState.Disconnected
+		}
 	}
 }

@@ -1,4 +1,4 @@
-import {ContextVariableConstructor, EventFirer, Observed, UpdateQueue, beginTrack, endTrack, Updatable, promisify} from 'lupos'
+import {ContextVariableConstructor, EventFirer, Observed, UpdateQueue, beginTrack, endTrack, Updatable, promisify, UnObserved} from 'lupos'
 import {TemplateStyle} from './style'
 import {addElementComponentMap, completeHydration, getComponentByElement, needsHydrate} from './from-element'
 import {TemplateSlot, SlotPosition, SlotPositionType, CompiledTemplateResult, SlotContentType} from '../template'
@@ -50,7 +50,8 @@ const enum ComponentStateMask {
 	Created = 1 << 1,
 	ReadyAlready = 1 << 2,
 	Connected = 1 << 3,
-	WillCallConnectCallback = 1 << 4,
+	Disconnecting = 1 << 4,
+	WillCallConnectCallback = 1 << 5,
 }
 
 
@@ -521,10 +522,11 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 		}
 
 		this.$stateMask |= (ComponentStateMask.Connected | ComponentStateMask.WillCallConnectCallback)
+		this.$stateMask &= ~ComponentStateMask.Disconnecting
 
 		// Postpone to connect child after updated.
 		// So it keeps consist with normal enqueuing update logic,
-		// and and visit child references before it updates.
+		// and and visit child references and modify some before it updates.
 		this.once('updated', () => {
 			if ((this.$stateMask & ComponentStateMask.WillCallConnectCallback) === 0) {
 				return
@@ -556,21 +558,42 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	}
 
 	beforeDisconnectCallback(this: Component<{}>, param: PartCallbackParameterMask | 0): Promise<void> | void {
-		if (!this.connected) {
+		let connected = this.connected
+		let disconnecting = this.$stateMask & ComponentStateMask.Disconnecting
+
+		// Not connected means already disconnected or disconnecting.
+		let fullyDisconnected = !connected && !disconnecting
+		if (fullyDisconnected) {
 			return
 		}
 
-		this.$stateMask &= ~ComponentStateMask.Connected
-		this.onWillDisconnect()
-		this.fire('will-disconnect')
+		if (connected) {
+			this.$stateMask &= ~ComponentStateMask.Connected
+			this.onWillDisconnect()
+			this.fire('will-disconnect')
 
-		// If haven't called connect callback, not call disconnect callback also.
-		if (this.$stateMask & ComponentStateMask.WillCallConnectCallback) {
-			this.$stateMask &= ~ComponentStateMask.WillCallConnectCallback
-			return
+			// If haven't called connect callback, no need to call disconnect callbacks also.
+			if (this.$stateMask & ComponentStateMask.WillCallConnectCallback) {
+				this.$stateMask &= ~ComponentStateMask.WillCallConnectCallback
+				return
+			}
 		}
 
-		return this.$contentSlot.beforeDisconnectCallback(getComponentSlotParameter(param))
+		let promise = this.$contentSlot.beforeDisconnectCallback(getComponentSlotParameter(param))
+
+		// When disconnecting, also broadcast it internally to pick up the promises.
+		if (disconnecting) {
+			return promise
+		}
+
+		// Wait for disconnecting.
+		else if (promise) {
+			this.$stateMask |= ComponentStateMask.Disconnecting
+
+			return promise.then(() => {
+				this.$stateMask &= ~ComponentStateMask.Disconnecting
+			})
+		}
 	}
 
 	/** Whether has some real content rendered. */
@@ -654,29 +677,28 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	 * can visit `connected` to know whether remove successfully.
 	 */
 	remove(canPlayLeaveTransition: boolean = false): Promise<void> | void {
-		if (!this.connected) {
-			return
+		if (this.connected
+			|| this.$stateMask & ComponentStateMask.Disconnecting
+		) {
+			let mask: PartCallbackParameterMask = PartCallbackParameterMask.AsDirectNode
+
+			if (!canPlayLeaveTransition) {
+				mask |= PartCallbackParameterMask.MoveImmediately
+			}
+
+			let promiseMay = this.beforeDisconnectCallback(mask)
+
+			// Wait for disconnect promise, then remove node.
+			if (promiseMay) {
+				return promiseMay.then(() => {
+					if (!this.connected) {
+						this.el.remove()
+					}
+				})
+			}
 		}
 
-		let mask: PartCallbackParameterMask = PartCallbackParameterMask.AsDirectNode
-
-		if (!canPlayLeaveTransition) {
-			mask |= PartCallbackParameterMask.MoveImmediately
-		}
-
-		let result = this.beforeDisconnectCallback(mask)
-
-		// Wait for disconnect promise, then remove node.
-		if (canPlayLeaveTransition && result) {
-			return result.then(() => {
-				if (!this.connected) {
-					this.el.remove()
-				}
-			})
-		}
-		else {
-			this.el.remove()
-		}
+		this.el.remove()
 	}
 
 	/** 
@@ -685,7 +707,10 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	 * Note that element not truly in document recently, so measuring not working.
 	 * 
 	 * Skip and return `true` if already connected.
-	 * Returns false if get disconnected before updated.
+	 * Returns `false` if get disconnected before updated.
+	 * 
+	 * When calls it in sync mode, you should safely visit element and properties.
+	 * When await it in async mode, you should safely visit child components.
 	 */
 	async connectManually(this: Component): Promise<boolean> {
 		if (this.connected) {
@@ -708,9 +733,9 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
  * `debug_xxx` functions should be eliminated in production mode.
  */
 (function debug_components() {
-	let original = (Component as any).prototype.onCreated;
+	let original = (Component as UnObserved).prototype.onCreated;
 	
-	(Component as any).prototype.onCreated = function() {
+	(Component as UnObserved).prototype.onCreated = function() {
 		original.call(this)
 
 		this.el.setAttribute('com', this.constructor.name)

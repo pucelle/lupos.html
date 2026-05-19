@@ -37,7 +37,7 @@ export class RefBinding implements Binding, Part {
 	/** Compiler will compile `this.prop` -> `r => this.prop = r` */
 	protected refFn: ((value: any) => void) | null = null
 
-	/** Whether has been referenced. */
+	/** Whether has been referenced, like connected state. */
 	protected refed: boolean = false
 
 	constructor(el: Element, context: any, modifiers: ('el' | 'com' | 'binding')[] = []) {
@@ -83,7 +83,7 @@ export class RefBinding implements Binding, Part {
 			return
 		}
 
-		if (this.refFn) {
+		if (this.refFn && this.refed) {
 			this.refFn.call(this.context, this.refType === RefType.Binding ? false : null)
 			this.refed = false
 		}

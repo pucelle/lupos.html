@@ -132,6 +132,9 @@ export class Transition {
 	/** Whether ready to play transition. */
 	private ready: Promise<void> | null = null
 
+	/** Finish promise. */
+	private promise: Promise<boolean> | null = null
+
 	constructor(el: Element) {
 		this.el = el
 	}
@@ -183,11 +186,17 @@ export class Transition {
 			promises.push(this.playMixedTransition(mixed, 'enter'))
 		}
 
+		let pr = Promise.withResolvers<boolean>()
+		this.promise = pr.promise
+
 		let finished = (await Promise.all(promises)).every(v => v)
 		if (finished) {
 			let enterEndedEvent = new CustomEvent('transition-enter-ended', {bubbles: false})
 			this.el.dispatchEvent(enterEndedEvent)
 		}
+
+		pr.resolve(finished)
+		this.promise = null
 
 		return finished
 	}
@@ -216,17 +225,27 @@ export class Transition {
 			promises.push(this.playMixedTransition(mixed, 'leave'))
 		}
 
+		let pr = Promise.withResolvers<boolean>()
+		this.promise = pr.promise
+
 		let finished = (await Promise.all(promises)).every(v => v)
 		if (finished) {
 			let leaveEndedEvent = new CustomEvent('transition-leave-ended', {bubbles: false})
 			this.el.dispatchEvent(leaveEndedEvent)
 		}
 
+		pr.resolve(finished)
+		this.promise = null
+
 		return finished
 	}
 
 	/** Prepare for transition properties, and update mixed transition players. */
 	private async prepareTransitions(phase: 'enter' | 'leave', result: TransitionResult): Promise<boolean> {
+		if (this.running) {
+			this.cancel()
+		}
+
 		let version = ++this.version
 		let {promise, resolve} = Promise.withResolvers<void>()
 
@@ -372,6 +391,8 @@ export class Transition {
 		for (let {transition} of this.mixedTransitions) {
 			transition.finish()
 		}
+
+		this.version++
 	}
 	
 	/** 
@@ -387,6 +408,22 @@ export class Transition {
 		}
 
 		this.version++
+	}
+
+	/** 
+	 * Resolved after transition end, with finished state as value.
+	 * If no transition playing, returns `false`.
+	 */
+	async untilEnd(): Promise<boolean | null> {
+		if (this.ready) {
+			await this.ready
+		}
+		
+		if (this.promise) {
+			return this.promise
+		}
+
+		return null
 	}
 }
 
