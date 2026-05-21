@@ -198,6 +198,14 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	}
 
 	/** 
+	 * Whether current component exit connected state,
+	 * but are still waiting transition playing to fully disconnected.
+	 */
+	get disconnecting(): boolean {
+		return (this.$stateMask & ComponentStateMask.Disconnecting) > 0
+	}
+
+	/** 
 	 * Check whether current component needs to be hydrated.
 	 * Always returns `false` after connected.
 	 */
@@ -559,7 +567,7 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 
 	beforeDisconnectCallback(this: Component<{}>, param: PartCallbackParameterMask | 0): Promise<void> | void {
 		let connected = this.connected
-		let disconnecting = this.$stateMask & ComponentStateMask.Disconnecting
+		let disconnecting = this.disconnecting
 
 		// Not connected means already disconnected or disconnecting.
 		let fullyDisconnected = !connected && !disconnecting
@@ -677,16 +685,13 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	 * can visit `connected` to know whether remove successfully.
 	 */
 	remove(canPlayLeaveTransition: boolean = false): Promise<void> | void {
-		if (this.connected
-			|| this.$stateMask & ComponentStateMask.Disconnecting
-		) {
-			let mask: PartCallbackParameterMask = PartCallbackParameterMask.AsDirectNode
-
+		if (this.connected || this.disconnecting) {
+			let param: PartCallbackParameterMask = PartCallbackParameterMask.AsDirectNode
 			if (!canPlayLeaveTransition) {
-				mask |= PartCallbackParameterMask.MoveImmediately
+				param |= PartCallbackParameterMask.MoveImmediately
 			}
 
-			let promiseMay = this.beforeDisconnectCallback(mask)
+			let promiseMay = this.beforeDisconnectCallback(param)
 
 			// Wait for disconnect promise, then remove node.
 			if (promiseMay) {
@@ -706,19 +711,24 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	 * and also wait for component to get updated.
 	 * Note that element not truly in document recently, so measuring not working.
 	 * 
+	 * By default it connect immediately and will play enter transition,
+	 * except `canPlayEnterTransition` specified as `false`.
+	 * 
 	 * Skip and return `true` if already connected.
 	 * Returns `false` if get disconnected before updated.
 	 * 
 	 * When calls it in sync mode, you should safely visit element and properties.
 	 * When await it in async mode, you should safely visit child components.
 	 */
-	async connectManually(this: Component): Promise<boolean> {
+	async connectManually(this: Component, canPlayEnterTransition: boolean = true): Promise<boolean> {
 		if (this.connected) {
 			return true
 		}
 
 		let param: PartCallbackParameterMask = PartCallbackParameterMask.AsDirectNode
-			| PartCallbackParameterMask.MoveImmediately
+		if (!canPlayEnterTransition) {
+			param |= PartCallbackParameterMask.MoveImmediately
+		}
 
 		this.afterConnectCallback(param)
 

@@ -31,6 +31,9 @@ export class RefBinding implements Binding, Part {
 	protected readonly el: Element
 	protected readonly context: any
 
+	/** For caching referenced binding. */
+	protected refValue: Component | Element | Binding | null = null
+
 	/** Whether reference element, or component, or binding. */
 	protected refType: RefType = RefType.Element
 	
@@ -57,24 +60,28 @@ export class RefBinding implements Binding, Part {
 		this.refFn = refFn
 	}
 
-	protected doReference() {
+	/** For setting referenced binding. */
+	setRefValue(value: Component | Element | Binding | null) {
+		this.refValue = value
+	}
+
+	afterConnectCallback(_param: PartCallbackParameterMask | 0) {
+		if (!this.refFn || this.refed) {
+			return
+		}
+
 		if (this.refType === RefType.Element) {
 			this.refFn!.call(this.context, this.el)
+			this.refed = true
 		}
 		else if (this.refType === RefType.Component) {
 			let com = Component.from(this.el)
 			this.refFn!.call(this.context, com)
+			this.refed = !!com
 		}
 		else {
-			this.refFn!.call(this.context, true)
-		}
-
-		this.refed = true
-	}
-
-	afterConnectCallback(_param: PartCallbackParameterMask | 0) {
-		if (this.refFn && !this.refed) {
-			this.doReference()
+			this.refFn!.call(this.context, this.refValue)
+			this.refed = !!this.refValue
 		}
 	}
 
@@ -84,7 +91,7 @@ export class RefBinding implements Binding, Part {
 		}
 
 		if (this.refFn && this.refed) {
-			this.refFn.call(this.context, this.refType === RefType.Binding ? false : null)
+			this.refFn.call(this.context, null)
 			this.refed = false
 		}
 	}

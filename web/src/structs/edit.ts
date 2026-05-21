@@ -30,7 +30,7 @@ export interface EditRecord {
 
 	/** 
 	 * Index in the old item list that need to insert item before.
-	 * Be `-1` when no need to do inserting.
+	 * Be `-1` when no need to do inserting or need to append.
 	 * Otherwise betweens `0 ~ items.length`.
 	 */
 	insertIndex: number
@@ -52,6 +52,14 @@ export const enum EditType {
 	 * - `insertIndex`: be `-1`.
 	 */
 	Leave,
+
+	/** 
+	 * Leaves it and then modify it by a new item, no need to move.
+	 * - `fromIndex`: the match item index in old item list.
+	 * - `toIndex`: the match item index in new item list.
+	 * - `insertIndex`: be `-1`.
+	 */
+	LeaveModify,
 
 	/** 
 	 * Moves same item from it's old index to current index.
@@ -109,43 +117,144 @@ export function getEditRecord<T>(oldItems: T[], newItems: T[], willReuse: boolea
 			}
 		})
 	}
+
+	// Build new item -> index map.
+	let newIndexMap: Map<T, number> = new Map(newItems.map((item, index) => [item, index]))
+	let oldReuseCount = 0
+
+	for (let i = 0; i < oldItems.length; i++) {
+		let oldItem = oldItems[i]
+
+		if (newIndexMap.has(oldItem)) {
+			oldReuseCount++
+		}
+	}
+
+	// Rate of can be shared items compare with old items.
+	let oldReuseRate = oldReuseCount / (oldItems.length + 1)
+
+	// Not enough reused rate, update all elements one by one to new items, no moving happens.
+	// We assume one moving equals about 5 modifications (for complex app it's larger).
+	if (oldReuseRate < 0.2) {
+		return getNonMovableEditRecord(oldItems, newItems)
+	}
 	else {
-		return getNormalEditRecord(oldItems, newItems, willReuse)
+		return getMovableEditRecord(oldItems, newItems, willReuse, newIndexMap)
 	}
 }
 
 
-/** 
- * When `oldItems` and `newItems` are both not empty.
- * When `willReuse` is `false`, will never reuse items.
- */
-function getNormalEditRecord<T>(oldItems: T[], newItems: T[], willReuse: boolean): EditRecord[] {
+/** Will never move elements. */
+function getNonMovableEditRecord<T>(
+	oldItems: T[],
+	newItems: T[]
+): EditRecord[] {
 
-	// `indexMap`: two way index map: sorted old index <=> new index.
-	// `restOldIndices`: sorted old indices which not appear in `indexMap`.
-	let {indexMap, restOldIndices} = makeTwoWayIndexMap(oldItems, newItems)
+	// Output this edit records.
+	let edit: EditRecord[] = []
+
+	// For each new item.
+	for(let toIndex = 0; toIndex < newItems.length; toIndex++) {
+
+		// Leave it here and modify.
+		if (toIndex < oldItems.length) {
+			edit.push({
+				type: EditType.LeaveModify,
+				fromIndex: toIndex,
+				toIndex,
+				insertIndex: -1,
+			})
+		}
+
+		// No old items, insert new to the end.
+		else {
+			edit.push({
+				type: EditType.Insert,
+				fromIndex: -1,
+				toIndex,
+				insertIndex: -1,
+			})
+		}
+	}
+
+	// Remove not used items.
+	if (oldItems.length > newItems.length) {
+		for (let i = newItems.length; i < oldItems.length; i++) {
+			edit.push({
+				type: EditType.Delete,
+				fromIndex: i,
+				toIndex: -1,
+				insertIndex: -1,
+			})
+		}
+	}
+
+	return edit
+}
+
+
+/** Will move elements which share items with old. */
+function getMovableEditRecord<T>(
+	oldItems: T[],
+	newItems: T[],
+	willReuse: boolean,
+	newIndexMap: Map<T, number>
+): EditRecord[] {
+	
+	// old index <=> new index.
+	let indicesMap: InternalTwoWayMap<number, number> = new InternalTwoWayMap()
+	let restOldIndices: number[] = []
+
+	for (let i = 0; i < oldItems.length; i++) {
+		let oldItem = oldItems[i]
+
+		if (newIndexMap.has(oldItem)) {
+			indicesMap.set(i, newIndexMap.get(oldItem)!)
+
+			// Must delete, or will cause error when same item exist.
+			newIndexMap.delete(oldItem)
+		}
+		else {
+			restOldIndices.push(i)
+		}
+	}
 
 	// All the new indices that have an old index mapped to, and order by the orders in the `oldItems`.
 	let newIndicesHaveOldMapped: number[] = []
 
-	for (let oldIndex of indexMap.leftKeys()) {
-		let indexInNew = indexMap.getByLeft(oldIndex)!
+	for (let oldIndex of indicesMap.leftKeys()) {
+		let indexInNew = indicesMap.getByLeft(oldIndex)!
 		newIndicesHaveOldMapped.push(indexInNew)
 	}
 
-	// Get a long enough incremental sequence from new indices,
-	// from new indices that have an old index mapped to,
-	// so no need move this part.
+	// Find a long enough incremental sequence from new indices,
+	// from new indices that have an old index mapped to, so no need move this part.
+	// Later for other indices, either move them when match, or move and modify when can reuse.
 	let stableNewIndicesStack = new ReadonlyIndexStack(findLongestIncrementalSequence(newIndicesHaveOldMapped))
-
-	// Old item indices that will be reused.
-	let restOldIndicesStack = new ReadonlyIndexStack(restOldIndices)
 
 	// New index of the next fully match item pair. `0 ~ newItems.length`
 	let nextStableNewIndex = stableNewIndicesStack.getNext()
 
+	// Old item indices that will be reused.
+	let restOldIndicesStack = new ReadonlyIndexStack(restOldIndices)
+
+	// An improvement here:
+	// Analyze rest indices between two stable new indices,
+	// and if can pick some (at most stable next index - prev index),
+	// persist them not moving with type specified as `LeaveModify`.
+	// About at least 99% it's adding or deleting or replace partial,
+	// so we doesn't implement it here.
+
+	// For doing so, we should:
+	// 1. loop old indices, check whether index is stable/reuse/rest
+	// 2. for each prev-next stable indices pair, check whether have
+	//    some rest indices betweens, if so, mark them as will `LeaveModify`,
+	//    and map it to a new index position by new stable indices pair.
+	//    Other rest indices move to `restOldIndicesStack`.
+	// 3. In the following indices loop, check whether index have a `LeaveModify` indices map.
+
 	// Index of old items to indicate where to insert new item.
-	let insertIndex = nextStableNewIndex === -1 ? oldItems.length : indexMap.getByRight(nextStableNewIndex)!
+	let insertIndex = nextStableNewIndex === -1 ? -1 : indicesMap.getByRight(nextStableNewIndex)!
 
 	// Output this edit records.
 	let edit: EditRecord[] = []
@@ -155,7 +264,7 @@ function getNormalEditRecord<T>(oldItems: T[], newItems: T[], willReuse: boolean
 
 		// Old and new items match each other, leave them both.
 		if (toIndex === nextStableNewIndex) {
-			let fromIndex = indexMap.getByRight(nextStableNewIndex)!
+			let fromIndex = indicesMap.getByRight(nextStableNewIndex)!
 
 			edit.push({
 				type: EditType.Leave,
@@ -165,12 +274,12 @@ function getNormalEditRecord<T>(oldItems: T[], newItems: T[], willReuse: boolean
 			})
 
 			nextStableNewIndex = stableNewIndicesStack.getNext()
-			insertIndex = nextStableNewIndex === -1 ? oldItems.length : indexMap.getByRight(nextStableNewIndex)!
+			insertIndex = nextStableNewIndex === -1 ? -1 : indicesMap.getByRight(nextStableNewIndex)!
 		}
 
 		// Move matched old item to the new position, no need to modify.
-		else if (indexMap.hasRight(toIndex)) {
-			let fromIndex = indexMap.getByRight(toIndex)!
+		else if (indicesMap.hasRight(toIndex)) {
+			let fromIndex = indicesMap.getByRight(toIndex)!
 
 			edit.push({
 				type: EditType.Move,
@@ -216,34 +325,6 @@ function getNormalEditRecord<T>(oldItems: T[], newItems: T[], willReuse: boolean
 	}
 
 	return edit
-}
-
-
-/** Create a 2 way index map: old index <=> new index, just like a sql inner join. */
-function makeTwoWayIndexMap<T>(oldItems: T[], newItems: T[]) {
-
-	// Will find last match when repeated items exist.
-	let newItemIndexMap: Map<T, number> = new Map(newItems.map((item, index) => [item, index]))
-
-	// old index <=> new index.
-	let indexMap: InternalTwoWayMap<number, number> = new InternalTwoWayMap()
-	let restOldIndices: number[] = []
-
-	for (let i = 0; i < oldItems.length; i++) {
-		let oldItem = oldItems[i]
-
-		if (newItemIndexMap.has(oldItem)) {
-			indexMap.set(i, newItemIndexMap.get(oldItem)!)
-
-			// Must delete, or will cause error when same item exist.
-			newItemIndexMap.delete(oldItem)
-		}
-		else {
-			restOldIndices.push(i)
-		}
-	}
-
-	return {indexMap, restOldIndices}
 }
 
 

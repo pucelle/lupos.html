@@ -61,7 +61,7 @@ export class ForBlock<T = any> {
 			let fromT = this.getItemAtIndex(oldTs, fromIndex)
 			let result = toIndex >= 0 ? this.renderFn(newData[toIndex], toIndex) : null
 
-			if (type === EditType.Leave) {
+			if (type === EditType.Leave || type === EditType.LeaveModify) {
 				this.leaveTemplate(fromT!, result!)
 			}
 			else if (type === EditType.Move || type === EditType.MoveModify) {

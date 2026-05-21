@@ -1,8 +1,10 @@
+import {Binding} from "./bindings"
+
 /** Values of Part Callback Parameter. */
 export const enum PartCallbackParameterMask {
 
 	/** 
-	 * To be connected or disconnected from some state change,
+	 * To be connected or disconnected from own state change,
 	 * but not because of parent component connect or disconnect.
 	 * 
 	 * E.g., for `<lu:if {...}><div :binding />...`, for `:binding`:
@@ -148,25 +150,41 @@ export function getTemplatePartParameter(param: PartCallbackParameterMask | 0, p
 /** It delegate a part, and this part itself may be deleted or appended again. */
 export class PartDelegator implements Part {
 
+	protected bindingMaker: () => Binding & Part
+	protected onBindingUpdated: ((binding: Binding & Part | null) => void) | undefined = undefined
+
 	protected connectedState: PartConnectedState = PartConnectedState.Disconnected
-	protected part: Part | null = null
+	protected activated: boolean = false
+	protected binding: Binding & Part | null = null
 
-	update(part: Part | null) {
-		if (this.part === part) {
-			return
-		}
+	constructor(bindingMaker: () => Binding & Part, onUpdated?: (binding: Binding & Part | null) => void) {
+		this.bindingMaker = bindingMaker
+		this.onBindingUpdated = onUpdated
+	}
 
-		if (this.connectedState === PartConnectedState.Connected) {
-			if (this.part) {
-				this.part.beforeDisconnectCallback(PartCallbackParameterMask.FromOwnStateChange | PartCallbackParameterMask.AsDirectNode)
+	update(activated: boolean, ...bindParams: any[]) {
+		if (activated) {
+			if (!this.binding) {
+				this.binding = this.bindingMaker()
 			}
 
-			if (part) {
-				part.afterConnectCallback(PartCallbackParameterMask.FromOwnStateChange | PartCallbackParameterMask.AsDirectNode)
+			if (bindParams.length > 0) {
+				this.binding.update!(...bindParams)
+			}
+
+			if (!this.activated && this.connectedState === PartConnectedState.Connected) {
+				this.binding.afterConnectCallback(PartCallbackParameterMask.FromOwnStateChange | PartCallbackParameterMask.AsDirectNode)
+				this.onBindingUpdated?.(this.binding)
+			}
+		}
+		else {
+			if (this.activated && this.binding && this.connectedState === PartConnectedState.Connected) {
+				this.binding.beforeDisconnectCallback(PartCallbackParameterMask.FromOwnStateChange | PartCallbackParameterMask.AsDirectNode)
+				this.onBindingUpdated?.(null)
 			}
 		}
 
-		this.part = part
+		this.activated = activated
 	}
 
 	afterConnectCallback(param: PartCallbackParameterMask | 0) {
@@ -174,8 +192,8 @@ export class PartDelegator implements Part {
 			return
 		}
 
-		if (this.part) {
-			this.part.afterConnectCallback(param | PartCallbackParameterMask.FromOwnStateChange)
+		if (this.activated) {
+			this.binding?.afterConnectCallback(param | PartCallbackParameterMask.FromOwnStateChange)
 		}
 
 		this.connectedState = PartConnectedState.Connected
@@ -189,7 +207,9 @@ export class PartDelegator implements Part {
 		}
 
 		// Must ensure part truly release, so should union `FromOwnStateChange`.
-		let promise = this.part?.beforeDisconnectCallback(param | PartCallbackParameterMask.FromOwnStateChange)
+		let promise = this.activated
+			? this.binding?.beforeDisconnectCallback(param | PartCallbackParameterMask.FromOwnStateChange)
+			: undefined
 
 		// When disconnecting, also broadcast it internally to pick up the promises.
 		if (this.connectedState === PartConnectedState.Disconnecting) {
