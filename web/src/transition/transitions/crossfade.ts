@@ -74,7 +74,7 @@ export const crossfade = /*#__PURE__*/Transition.define(async function(el: Eleme
 	CrossFadeElementMatchMap.add(options.key, phase, el)
 
 	// Sync same keyed enter and leave transitions.
-	await UpdateQueue.untilAllComplete()
+	await UpdateQueue.untilComplete()
 
 	let pairPhase: 'enter' | 'leave' = phase === 'enter' ? 'leave' : 'enter'
 	let useAnyPair = false
@@ -87,7 +87,7 @@ export const crossfade = /*#__PURE__*/Transition.define(async function(el: Eleme
 	}
 
 	// Delete key match after next-time update complete.
-	UpdateQueue.untilAllComplete().then(() => {
+	UpdateQueue.untilComplete().then(() => {
 		CrossFadeElementMatchMap.delete(options.key, phase, el)
 	})
 

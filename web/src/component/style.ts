@@ -138,6 +138,6 @@ export function addStyle(style: TemplateStyle) {
 export async function flushStyles() {
 	if (toUpdateStyle) {
 		toUpdateStyle.willUpdate()
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 	}
 }

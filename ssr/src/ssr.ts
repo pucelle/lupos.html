@@ -157,7 +157,7 @@ export class SSR {
 		let rendered = render(toRender)
 		await rendered.connectManually()
 
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		return this.formatHTML(rendered.el.innerHTML)
 	}
 
@@ -169,11 +169,11 @@ export class SSR {
 	async renderComponent(Com: typeof Component, tagName: string = 'div', promiseToWait: (() => Promise<any>) | null = null): Promise<string> {
 		let com = new Com(document.createElement(tagName))
 		await com.connectManually()
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		if (promiseToWait) {
 			await promiseToWait()
-			await UpdateQueue.untilAllComplete()
+			await UpdateQueue.untilComplete()
 		}
 
 		com.el.setAttribute('ssr', '')
@@ -224,7 +224,7 @@ export class SSR {
 	 */
 	async toString(): Promise<string> {
 		this.connectCustomElements(this.document.body)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		let output = this.document.toString()
 		return output

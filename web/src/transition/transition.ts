@@ -255,7 +255,7 @@ export class Transition {
 
 		// Most transition getters will read dom properties.
 		// Ensure it firstly render, then play.
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		// May start to play another.
 		if (this.version !== version) {
