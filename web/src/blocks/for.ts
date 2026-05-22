@@ -58,9 +58,9 @@ export class ForBlock<T = any> implements Updatable {
 	}
 
 	willUpdate() {
-		if (this.slot.connectedState !== PartConnectedState.Connected) {
-			return
-		}
+
+		// Not like part tree, can connect at any time.
+		// Here when calls `willUpdate` means we should always enqueue.
 
 		// Component create earlier, update earlier.
 		UpdateQueue.enqueue(this)

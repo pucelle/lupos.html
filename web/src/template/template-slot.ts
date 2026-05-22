@@ -160,36 +160,40 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 	 * Note value must be strictly of the content type specified.
 	 */
 	update(value: unknown) {
-		if (!this.knownContentType) {
-			let newContentType = this.identifyContentType(value)
-			if (newContentType !== this.contentType) {
-				this.clearContent()
+		let newContentType = this.knownContentType ? this.contentType : this.identifyContentType(value)
+		if (newContentType !== this.contentType) {
+			this.clearContent(newContentType)
+
+			if (newContentType !== SlotContentType.Promise) {
 				this.contentType = newContentType
 			}
 		}
 
 		if (this.hydrateNodes) {
-			this.hydrate(value)
+			this.hydrate(value, newContentType)
+			return
 		}
-		else if (this.contentType === SlotContentType.TemplateResult) {
+		
+		if (newContentType === SlotContentType.TemplateResult) {
 			this.updateTemplateResult(value as CompiledTemplateResult)
 		}
-		else if (this.contentType === SlotContentType.TemplateResultList) {
+		else if (newContentType === SlotContentType.TemplateResultList) {
 			this.updateTemplateResultList(value as CompiledTemplateResult[])
 		}
-		else if (this.contentType === SlotContentType.Text) {
+		else if (newContentType === SlotContentType.Text) {
 			this.updateText(value)
 		}
-		else if (this.contentType === SlotContentType.Node) {
+		else if (newContentType === SlotContentType.Node) {
 			this.updateNode(value as ChildNode)
 		}
-		else if (this.contentType === SlotContentType.Promise) {
+		else if (newContentType === SlotContentType.Promise) {
 			if (value !== this.promise) {
 				this.promise = value as Promise<PrimitiveRenderResult>;
 
 				(value as Promise<PrimitiveRenderResult>).then(result => {
 					if (this.promise === value && this.connectedState === PartConnectedState.Connected) {
 						this.update(result)
+						this.promise = null
 					}
 				})
 			}
@@ -200,30 +204,31 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 	 * Hydrate by value parameter after known it's type.
 	 * Note value must be strictly of the content type specified.
 	 */
-	hydrate(value: unknown) {
-		if (this.contentType === SlotContentType.TemplateResult) {
+	hydrate(value: unknown, newContentType: SlotContentType | null) {
+		if (newContentType === SlotContentType.TemplateResult) {
 			this.hydrateTemplateResult(value as CompiledTemplateResult)
 			this.hydrateNodes = undefined
 		}
-		else if (this.contentType === SlotContentType.TemplateResultList) {
+		else if (newContentType === SlotContentType.TemplateResultList) {
 			this.hydrateTemplateResultList(value as CompiledTemplateResult[])
 			this.hydrateNodes = undefined
 		}
-		else if (this.contentType === SlotContentType.Text) {
+		else if (newContentType === SlotContentType.Text) {
 			this.hydrateText(value)
 			this.hydrateNodes = undefined
 		}
-		else if (this.contentType === SlotContentType.Node) {
+		else if (newContentType === SlotContentType.Node) {
 			this.hydrateNode(value as ChildNode)
 			this.hydrateNodes = undefined
 		}
-		else if (this.contentType === SlotContentType.Promise) {
+		else if (newContentType === SlotContentType.Promise) {
 			if (value !== this.promise) {
 				this.promise = value as Promise<PrimitiveRenderResult>;
 
 				(value as Promise<PrimitiveRenderResult>).then(result => {
 					if (this.promise === value && this.connectedState === PartConnectedState.Connected) {
-						this.hydrate(result)
+						this.hydrate(result, newContentType)
+						this.promise = null
 					}
 				})
 			}
@@ -252,29 +257,60 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 		}
 	}
 
-	/** Clear current content, reset content and content type. */
-	private clearContent() {
+	/** 
+	 * Clear current content, reset content and content type.
+	 * When new content type is promise, persist old contents with
+	 * only disconnecting them.
+	 */
+	private clearContent(newContentType: SlotContentType | null) {
 		if (!this.content) {
 			return
 		}
 
-		if (this.contentType === SlotContentType.TemplateResult
-			|| this.contentType === SlotContentType.Text
-			|| this.contentType === SlotContentType.Node
-		) {
-			this.removeTemplate(this.content as Template)
-		}
-		else if (this.contentType === SlotContentType.TemplateResult) {
-			let ts = this.content as Template[]
+		// Only disconnect the child content.
+		if (newContentType === SlotContentType.Promise) {
 
-			for (let i = 0; i < ts.length; i++) {
-				let t = ts[i]
-				this.removeTemplate(t)
+			// Already disconnected.
+			if (this.promise) {
+				return
+			}
+
+			if (this.contentType === SlotContentType.TemplateResult
+				|| this.contentType === SlotContentType.Text
+				|| this.contentType === SlotContentType.Node
+			) {
+				(this.content as Template).beforeDisconnectCallback(PartCallbackParameterMask.MoveImmediately)
+			}
+			else if (this.contentType === SlotContentType.TemplateResult) {
+				let ts = this.content as Template[]
+
+				for (let i = 0; i < ts.length; i++) {
+					let t = ts[i]
+					t.beforeDisconnectCallback(PartCallbackParameterMask.MoveImmediately)
+				}
 			}
 		}
 
-		this.content = null
-		this.contentType = null
+		// Remove the child content.
+		else {
+			if (this.contentType === SlotContentType.TemplateResult
+				|| this.contentType === SlotContentType.Text
+				|| this.contentType === SlotContentType.Node
+			) {
+				this.removeTemplate(this.content as Template)
+			}
+			else if (this.contentType === SlotContentType.TemplateResult) {
+				let ts = this.content as Template[]
+
+				for (let i = 0; i < ts.length; i++) {
+					let t = ts[i]
+					this.removeTemplate(t)
+				}
+			}
+
+			this.content = null
+			this.contentType = null
+		}
 	}
 
 	/** Update from a template result. */
@@ -282,6 +318,11 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 		let oldT = this.content as Template | null
 		if (oldT && oldT.canUpdateBy(tr)) {
 			oldT.update(tr.values)
+
+			// Re-connect old content after content promise resolved.
+			if (this.promise) {
+				oldT.afterConnectCallback(PartCallbackParameterMask.MoveImmediately)
+			}
 		}
 		else {
 			if (oldT) {
@@ -327,6 +368,11 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 
 			if (oldT && oldT.canUpdateBy(tr)) {
 				oldT.update(tr.values)
+
+				// Re-connect old content after content promise resolved.
+				if (this.promise) {
+					oldT.afterConnectCallback(PartCallbackParameterMask.MoveImmediately)
+				}
 			}
 			else {
 				let newT = tr.maker.make(tr.context)
