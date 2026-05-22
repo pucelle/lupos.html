@@ -6,6 +6,7 @@ import {ComponentConstructor, RenderResult} from './types'
 import {getComponentSlotParameter, Part, PartCallbackParameterMask} from '../part'
 import {SlotRange} from '../template/slot-range'
 import {deleteContextVariables, getContextVariableDeclared, setContextVariable} from './context-variable'
+import {getIncrementalId} from '../iid'
 
 
 export interface ComponentEvents {
@@ -39,10 +40,6 @@ export interface ComponentEvents {
 	 */
 	'updated': () => void
 }
-
-
-/** Current of `component.incrementalId`. */
-let IncrementalId = 1
 
 
 /** Components state. */
@@ -169,7 +166,7 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	 * or for debugging a specified component.
 	 * Only for internal usages.
 	 */
-	readonly iid: number = IncrementalId++
+	readonly iid: number = getIncrementalId()
 
 	/** State of current component, byte mask type. */
 	protected $stateMask: ComponentStateMask | 0 = 0
@@ -251,11 +248,10 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 			console.warn(err)
 		}
 
-		this.$contentSlot.update(result)
-
-		// `endTrack` here is important.
-		// This will cause can track the update process of `ForBlock`.
 		endTrack()
+
+		// Also means we should track `<lu:for>` independently.
+		this.$contentSlot.update(result)
 	}
 
 	/** 

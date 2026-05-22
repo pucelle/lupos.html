@@ -1,6 +1,8 @@
 import {EditType, getEditRecord} from '../structs/edit'
 import {CompiledTemplateResult, HydrateNodesSplitter, Template, TemplateSlot} from '../template'
 import {PartCallbackParameterMask, PartConnectedState} from '../part'
+import {Updatable, UpdateQueue} from 'lupos'
+import {getIncrementalId} from '../iid'
 
 
 /** 
@@ -19,40 +21,67 @@ type ForBlockRenderFn = (item: any, index: number) => CompiledTemplateResult
  * 	`}</lu:for>
  * ```
  */
-export class ForBlock<T = any> {
+export class ForBlock<T = any> implements Updatable {
 
+	readonly iid: number = getIncrementalId()
 	readonly slot: TemplateSlot
 	readonly context: any
 
+	private hydrateNodes: ArrayLike<ChildNode> | undefined
 	private renderFn!: ForBlockRenderFn
-	private data: T[] = []
+	private oldData: T[] = []
+	private newData: T[] = []
 	private templates: Template[] = []
 
 	constructor(slot: TemplateSlot) {
 		this.slot = slot
+		this.hydrateNodes = this.slot.takeHydrateNodes()
 	}
 
 	/** Update render function. */
 	updateRenderFn(renderFn: ForBlockRenderFn) {
+		if (renderFn === this.renderFn) {
+			return
+		}
+
 		this.renderFn = renderFn
+		this.willUpdate()
 	}
 
 	/** Update data items. */
 	updateData(data: Iterable<T>) {
-		let hydrateNodes = this.slot.takeHydrateNodes()
-		if (hydrateNodes) {
-			this.hydrateData(data, hydrateNodes)
+
+		// Must clone, will compare it with the data at next time updating.
+		this.newData = [...data]
+
+		this.willUpdate()
+	}
+
+	willUpdate() {
+		if (this.slot.connectedState !== PartConnectedState.Connected) {
 			return
 		}
 
-		// Must clone, will compare it with the data at next time updating.
-		let newData = [...data]
+		// Component create earlier, update earlier.
+		UpdateQueue.enqueue(this)
+	}
 
-		let oldData = this.data
+	update() {
+		if (this.slot.connectedState !== PartConnectedState.Connected) {
+			return
+		}
+
+		if (this.hydrateNodes) {
+			this.hydrateData()
+			return
+		}
+
+		let oldData = this.oldData
+		let newData = this.newData
+
 		let oldTs = this.templates
 		let editRecord = getEditRecord(oldData, newData, true)
 
-		this.data = newData
 		this.templates = []
 
 		for (let record of editRecord) {
@@ -83,17 +112,15 @@ export class ForBlock<T = any> {
 		}
 
 		this.slot.updateExternalTemplateList(this.templates)
+		this.oldData = newData
 	}
 
-	/** Update data items. */
-	private hydrateData(data: Iterable<T>, hydrateNodes: ArrayLike<ChildNode>) {
-
-		// Must clone, will compare it with the data at next time updating.
-		let newData = [...data]
-		
-		let splitter = new HydrateNodesSplitter(hydrateNodes)
+	/** Hydrate data items. */
+	private hydrateData() {
+		let newData = this.newData
+		let splitter = new HydrateNodesSplitter(this.hydrateNodes!)
 	
-		this.data = newData
+		this.newData = newData
 		this.templates = []
 
 		for (let index = 0; index < newData.length; index++) {
@@ -115,6 +142,8 @@ export class ForBlock<T = any> {
 
 		splitter.clear()
 		this.slot.updateExternalTemplateList(this.templates)
+
+		this.hydrateNodes = undefined
 	}
 
 	private getItemAtIndex<T>(items: T[], index: number): T | null {

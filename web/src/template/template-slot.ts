@@ -111,7 +111,9 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 		if (this.contentType === SlotContentType.TemplateResult) {
 			promiseMay = (this.content as Template).beforeDisconnectCallback(param)
 		}
-		else if (this.contentType === SlotContentType.TemplateResultList) {
+		else if (this.contentType === SlotContentType.TemplateResultList
+			&& this.content	// Very rare situation disconnect before `<lu:for>` updated.
+		) {
 			let promises: Promise<void>[] = []
 			
 			for (let t of this.content as Template[]) {
