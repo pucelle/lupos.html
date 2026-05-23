@@ -281,7 +281,7 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 			) {
 				(this.content as Template).beforeDisconnectCallback(PartCallbackParameterMask.MoveImmediately)
 			}
-			else if (this.contentType === SlotContentType.TemplateResult) {
+			else if (this.contentType === SlotContentType.TemplateResultList) {
 				let ts = this.content as Template[]
 
 				for (let i = 0; i < ts.length; i++) {
@@ -299,7 +299,7 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 			) {
 				this.removeTemplate(this.content as Template)
 			}
-			else if (this.contentType === SlotContentType.TemplateResult) {
+			else if (this.contentType === SlotContentType.TemplateResultList) {
 				let ts = this.content as Template[]
 
 				for (let i = 0; i < ts.length; i++) {
