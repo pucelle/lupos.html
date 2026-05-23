@@ -115,7 +115,7 @@ export class TransitionBinding implements Binding, Part {
 
 		// Global, or as direct node when moving.
 		if (this.global || (param & PartCallbackParameterMask.AsDirectNode) > 0) {
-			if (this.phase === 'leave' || this.phase === 'none') {
+			if (this.phase === 'leave' || this.phase === 'both') {
 				return true
 			}
 		}
@@ -172,7 +172,7 @@ export class TransitionBinding implements Binding, Part {
 
 		// Global, or as direct node when moving.
 		if (this.global || (param & PartCallbackParameterMask.AsDirectNode) > 0) {
-			if (this.phase === 'enter' || this.phase === 'none') {
+			if (this.phase === 'enter' || this.phase === 'both') {
 				return true
 			}
 		}
