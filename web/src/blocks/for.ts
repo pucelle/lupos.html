@@ -1,7 +1,7 @@
 import {EditType, getEditRecord} from '../structs/edit'
 import {CompiledTemplateResult, HydrateNodesSplitter, Template, TemplateSlot} from '../template'
 import {PartCallbackParameterMask, PartConnectedState} from '../part'
-import {Updatable, UpdateQueue} from 'lupos'
+import {beginTrack, endTrack, Updatable, UpdateQueue} from 'lupos'
 import {getIncrementalId} from '../iid'
 
 
@@ -78,9 +78,9 @@ export class ForBlock<T = any> implements Updatable {
 
 		let oldData = this.oldData
 		let newData = this.newData
-
 		let oldTs = this.templates
 		let editRecord = getEditRecord(oldData, newData, true)
+		let newResults = this.renderItems()
 
 		this.templates = []
 
@@ -88,7 +88,7 @@ export class ForBlock<T = any> implements Updatable {
 			let {type, insertIndex, fromIndex, toIndex} = record
 			let nextOldT = this.getItemAtIndex(oldTs, insertIndex)
 			let fromT = this.getItemAtIndex(oldTs, fromIndex)
-			let result = toIndex >= 0 ? this.renderFn(newData[toIndex], toIndex) : null
+			let result = toIndex >= 0 ? newResults[toIndex] : null
 
 			if (type === EditType.Leave || type === EditType.LeaveModify) {
 				this.leaveTemplate(fromT!, result!)
@@ -115,17 +115,27 @@ export class ForBlock<T = any> implements Updatable {
 		this.oldData = newData
 	}
 
+	private renderItems(): CompiledTemplateResult[] {
+		beginTrack(this)
+
+		let results = this.newData.map((item, toIndex) => {
+			return this.renderFn(item, toIndex)
+		})
+
+		endTrack()
+
+		return results
+	}
+
 	/** Hydrate data items. */
 	private hydrateData() {
-		let newData = this.newData
 		let splitter = new HydrateNodesSplitter(this.hydrateNodes!)
+		let newResults = this.renderItems()
 	
-		this.newData = newData
 		this.templates = []
 
-		for (let index = 0; index < newData.length; index++) {
-			let item = newData[index]
-			let result = this.renderFn(item, index)
+		for (let index = 0; index < newResults.length; index++) {
+			let result = newResults[index]
 			let nodes = splitter.split(result)
 			let newT = result.maker.make(result.context, nodes)
 
