@@ -173,8 +173,10 @@ export class SSR {
 
 		if (promiseToWait) {
 			await promiseToWait()
-			await UpdateQueue.untilComplete()
 		}
+
+		// Wait for even very deep micro tasks.
+		await new Promise(resolve => setTimeout(resolve, 0))
 
 		com.el.setAttribute('ssr', '')
 		return this.formatHTML(com.el.outerHTML)
