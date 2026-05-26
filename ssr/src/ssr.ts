@@ -104,7 +104,7 @@ if (!globalThis.cancelAnimationFrame) {
 	globalThis.cancelAnimationFrame = function(_id: number) {}
 }
 
-if (!globalThis.cancelAnimationFrame) {
+if (!globalThis.devicePixelRatio) {
 	globalThis.devicePixelRatio = 1
 }
 
@@ -200,9 +200,6 @@ export class SSR {
 		if (promiseToWait) {
 			await promiseToWait()
 		}
-
-		// Wait for even very deep micro tasks.
-		await new Promise(resolve => setTimeout(resolve, 0))
 
 		com.el.setAttribute('ssr', '')
 		return this.formatHTML(com.el.outerHTML)
