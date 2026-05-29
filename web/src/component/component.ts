@@ -502,9 +502,10 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 		}
 
 		if (connected) {
-			this.$stateMask &= ~ComponentStateMask.Connected
 			this.onWillDisconnect()
 			this.fire('will-disconnect')
+			
+			this.$stateMask &= ~ComponentStateMask.Connected
 
 			// If haven't called connect callback, no need to call disconnect callbacks also.
 			if (this.$stateMask & ComponentStateMask.WillCallConnectCallback) {
