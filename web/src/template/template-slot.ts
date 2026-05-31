@@ -246,6 +246,13 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 				})
 			}
 		}
+		else {
+			for (let i = this.hydrateNodes!.length - 1; i >= 0; i--) {
+				this.hydrateNodes![i].remove()
+			}
+			
+			this.hydrateNodes = undefined
+		}
 	}
 
 	/** Identify content type by value. */
