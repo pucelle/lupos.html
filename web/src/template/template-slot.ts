@@ -431,7 +431,7 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 
 	/** Update from a text-like value. */
 	private updateText(value: unknown) {
-		let text = value === null || value === undefined ? '' : String(value).trim()
+		let text = value === null || value === undefined ? '' : String(value)
 		let t = this.content as Template<[string]> | null
 
 		if (!t) {
@@ -445,7 +445,7 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 
 	/** Hydrate from a text-like value. */
 	private hydrateText(value: unknown) {
-		let text = value === null || value === undefined ? '' : String(value).trim()
+		let text = value === null || value === undefined ? '' : String(value)
 		let t = TextTemplateMaker.make(null, this.hydrateNodes!) as Template<string[]>
 
 		t.hydrateNodesBefore(this.endOuterPosition)
