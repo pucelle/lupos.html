@@ -49,6 +49,7 @@ export const fold = /*#__PURE__*/Transition.define(function(el: HTMLElement, opt
 			[paddingProp2]: '0',
 			[marginProp1]: '0',
 			[marginProp2]: '0',
+			overflow: 'hidden',
 		},
 		endFrame: {
 			[prop]: size + 'px',
@@ -56,6 +57,7 @@ export const fold = /*#__PURE__*/Transition.define(function(el: HTMLElement, opt
 			[paddingProp2]: paddingValue2,
 			[marginProp1]: marginValue1,
 			[marginProp2]: marginValue2,
+			overflow: 'hidden',
 		},
 	}
 
