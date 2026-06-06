@@ -469,7 +469,7 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 			this.$stateMask &= ~ComponentStateMask.WillCallConnectCallback
 			
 			// Call connect callback if not yet.
-			let slotParam = getComponentSlotParameter(param)
+			let slotParam = getComponentSlotParameter(param, this.el.localName === 'slot')
 			this.$contentSlot.afterConnectCallback(slotParam)
 
 			// Call ready if not yet.
@@ -514,7 +514,7 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 			}
 		}
 
-		let promise = this.$contentSlot.beforeDisconnectCallback(getComponentSlotParameter(param))
+		let promise = this.$contentSlot.beforeDisconnectCallback(getComponentSlotParameter(param, this.el.localName === 'slot'))
 
 		// When disconnecting, also broadcast it internally to pick up the promises.
 		if (disconnecting) {

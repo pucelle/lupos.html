@@ -101,7 +101,7 @@ export const enum PartPositionType {
 	Normal = 0,
 
 	/** Use direct child node (not grandchild or other descendants) of template. */
-	DirectNode = 1,
+	DirectChildNode = 1,
 
 	/** Use context node. */
 	ContextNode = 2,
@@ -109,10 +109,10 @@ export const enum PartPositionType {
 
 
 /** Get content slot parameter from component callback parameter. */
-export function getComponentSlotParameter(param: PartCallbackParameterMask | 0): PartCallbackParameterMask | 0 {
+export function getComponentSlotParameter(param: PartCallbackParameterMask | 0, isSlotTag: boolean): PartCallbackParameterMask | 0 {
 
 	// Replace `AsDirectNode` to as `AsContextNode` for a component.
-	if (param & PartCallbackParameterMask.AsDirectNode) {
+	if (param & PartCallbackParameterMask.AsDirectNode && !isSlotTag) {
 		param &= ~PartCallbackParameterMask.AsDirectNode
 		param |= PartCallbackParameterMask.AsDirectContextNodeInternal
 	}
@@ -129,7 +129,7 @@ export function getTemplatePartParameter(param: PartCallbackParameterMask | 0, p
 
 	// Removes `AsDirectNode` if is in Direct Position.
 	if (param & PartCallbackParameterMask.AsDirectNode) {
-		if (position !== PartPositionType.DirectNode) {
+		if (position !== PartPositionType.DirectChildNode) {
 			param &= ~PartCallbackParameterMask.AsDirectNode
 		}
 	}
