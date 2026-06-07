@@ -238,19 +238,21 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	/** Update and track rendering contents. */
 	protected updateRendering() {
 		beginTrack(this)
+
 		let result: CompiledTemplateResult | CompiledTemplateResult[] | string | null
+		let meetsError = false
 
 		try {
 			result = this.render() as typeof result
 		}
 		catch (err) {
 			result = null
+			meetsError = true
 			console.warn(err)
 		}
 
-		endTrack()
+		endTrack(meetsError)
 
-		// Also means we should track `<lu:for>` independently.
 		this.$contentSlot.update(result)
 	}
 

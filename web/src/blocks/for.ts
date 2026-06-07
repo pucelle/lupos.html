@@ -118,11 +118,21 @@ export class ForBlock<T = any> implements Updatable {
 	private renderItems(): CompiledTemplateResult[] {
 		beginTrack(this)
 
-		let results = this.newData.map((item, toIndex) => {
-			return this.renderFn(item, toIndex)
-		})
+		let results: CompiledTemplateResult[]
+		let meetsError = false
 
-		endTrack()
+		try {
+			results = this.newData.map((item, toIndex) => {
+				return this.renderFn(item, toIndex)
+			})
+		}
+		catch (err) {
+			results = []
+			meetsError = true
+			console.warn(err)
+		}
+
+		endTrack(meetsError)
 
 		return results
 	}

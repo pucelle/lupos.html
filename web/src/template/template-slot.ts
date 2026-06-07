@@ -39,7 +39,7 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 	readonly endOuterPosition: SlotPosition<SlotEndOuterPositionType>
 
 	private contentType: T | null = null
-	private readonly knownContentType: boolean
+	private knownContentType: boolean
 	private hydrateNodes: ArrayLike<ChildNode> | undefined
 	private content: Template | Template[] | null = null
 	private promise: Promise<RenderResult> | null = null
@@ -162,9 +162,19 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 	update(value: unknown) {
 
 		// Even known content type, value may become null when meet render error.
-		let newContentType = value === null
-			? null
-			: this.knownContentType ? this.contentType : this.identifyContentType(value)
+		let newContentType: T | null
+
+		// If `value` is null, `ContentType` cache missing.
+		if (value === null) {
+			newContentType = null
+
+			if (this.knownContentType) {
+				this.knownContentType = false
+			}
+		}
+		else {
+			newContentType = this.knownContentType ? this.contentType : this.identifyContentType(value)
+		}
 
 		if (newContentType !== this.contentType) {
 			if (newContentType !== SlotContentType.Promise) {
