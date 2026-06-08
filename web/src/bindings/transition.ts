@@ -92,6 +92,9 @@ export class TransitionBinding implements Binding, Part {
 		if (this.shouldPlayEnter(param)) {
 			this.enter()
 		}
+		else {
+			this.transition.cancel()
+		}
 
 		this.connectedState = PartConnectedState.Connected
 	}
@@ -158,6 +161,7 @@ export class TransitionBinding implements Binding, Part {
 			}
 		}
 		else {
+			this.transition.cancel()
 			this.connectedState = PartConnectedState.Disconnected
 		}
 	}
