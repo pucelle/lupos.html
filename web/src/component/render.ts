@@ -75,11 +75,11 @@ export class RenderedComponentLike<E = any> extends Component<E> {
 
 		if (this.componentRenderedNeedsValidate) {
 			this.componentRenderedNeedsValidate = false
-			let firstElement = this.el.firstElementChild
+			let lastElement = this.el.lastElementChild
 
 			// Re-rendered new component.
-			if (firstElement && firstElement !== this.componentRenderedAs?.el) {
-				let com = cons.from(firstElement)!
+			if (lastElement && lastElement !== this.componentRenderedAs?.el) {
+				let com = cons.from(lastElement)!
 				if (!com) {
 					throw new Error(`The "renderer" must render a "<${cons.name}>" type of component!`)
 				}

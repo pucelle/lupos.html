@@ -28,7 +28,11 @@ export class SlotPositionMap {
 		this.ptMap.set(position, template)
 	}
 
-	/** Get template position, the position where template located before. */
+	/** 
+	 * Get template position, the position where template located before it.
+	 * So later when we want to get template nodes, just walk
+	 * from first node of template to the node of this position.
+	 */
 	getPosition(template: Template<any>): SlotPosition | undefined {
 		return this.tpMap.get(template)
 	}

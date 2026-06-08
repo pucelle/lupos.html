@@ -160,11 +160,9 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 	 * Note value must be strictly of the content type specified.
 	 */
 	update(value: unknown) {
-
-		// Even known content type, value may become null when meet render error.
 		let newContentType: T | null
 
-		// If `value` is null, `ContentType` cache missing.
+		// Even known content type, value may become null when meet render error.
 		if (value === null) {
 			newContentType = null
 
@@ -172,8 +170,11 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 				this.knownContentType = false
 			}
 		}
+		else if (this.knownContentType) {
+			newContentType = this.contentType
+		}
 		else {
-			newContentType = this.knownContentType ? this.contentType : this.identifyContentType(value)
+			newContentType = this.identifyContentType(value)
 		}
 
 		if (newContentType !== this.contentType) {

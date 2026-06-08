@@ -1,13 +1,19 @@
 /** 
  * Contents that can be included in a `<tag>${...}<.tag>`.
- * **Do not** change the values of each enum item.
+ * **Do Not** change the values of each enum item.
  */
 export const enum SlotPositionType {
 
-	/** End position collapse with end of parent container range. */
+	/** 
+	 * End position collapse with end of parent container range.
+	 * Will add or remove to the end of child contents.
+	 */
 	AfterContent = 0,
 
-	/** End position collapse with start of next sibling node. */
+	/** 
+	 * End position collapse with start of next sibling node.
+	 * Will add or remove before the start of current node.
+	 */
 	Before = 1,
 }
 
