@@ -24,7 +24,9 @@ const enum RefType {
  * - `<div :ref=${(el) => this.refElWithData(el, localVariable)}>`
  * - `<div :ref=${(el) => if (localVariable) this.refElWithData(el)}>`
  * 
- * Note otherwise: if element where `:ref` attached get re-used, ref function will not be called.
+ * Note otherwise:
+ * - If element where `:ref` attached get re-used, ref function will not be called.
+ * - If element get disconnect from parental state change, ref function will not be called.
  */
 export class RefBinding implements Binding, Part {
 
