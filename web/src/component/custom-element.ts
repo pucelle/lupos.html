@@ -125,6 +125,6 @@ function onCustomElementDisconnected(el: HTMLElement) {
 			| PartCallbackParameterMask.MoveImmediately
 		)
 		
-		console.warn(`Suggest you DON'T remove custom element directly, which will cause disconnect action cant work as expected! but remove component instead.`, 'CustomElementDisconnectActionWarning')
+		console.warn(`Suggest you DON'T remove custom element directly, which will cause disconnect action cant work as expected! but remove component instead.`)
 	}
 }
