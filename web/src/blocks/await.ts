@@ -5,6 +5,7 @@ import {CompiledTemplateResult, TemplateMaker, TemplateSlot} from '../template'
 
 /** 
  * Make it by compiling:
+ * 
  * ```html
  * 	<lu:await ${AsyncContent}>
  *     Default Content

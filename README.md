@@ -94,6 +94,10 @@ export class Checkbox extends Component {
 		```html
 		<lu:keyed ${...} ?cache>...</lu:keyed>
 		```
+	- **cache**: can restore previously rendered contents and states.
+		```html
+		<lu:cache>${...}</lu:cache>
+		```
 	- **switch**: switch control flow statements like which in javascript.
 		```html
 		<lu:switch ${...}>

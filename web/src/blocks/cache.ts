@@ -3,8 +3,9 @@ import {CompiledTemplateResult, Template, TemplateMaker, TemplateSlot} from '../
 
 /** 
  * Make it by compiling:
+ * 
  * ```html
- * 	<lu:cache>...</lu:cache>
+ * 	<lu:cache>${...}</lu:cache>
  * ```
  */
 export class CacheBlock {

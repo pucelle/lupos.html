@@ -3,6 +3,7 @@ import {CacheableIfBlock, IfBlock} from './if'
 
 /** 
  * Make it by compiling:
+ * 
  * ```html
  * 	<lu:switch ${...}>
  * 		<lu:case ${...}>...</lu:case>
@@ -16,6 +17,7 @@ export const SwitchBlock = IfBlock
 
 /** 
  * Make it by compiling:
+ * 
  * ```html
  * 	<lu:switch ${...} cache>
  * 		<lu:case ${...}>...</lu:case>

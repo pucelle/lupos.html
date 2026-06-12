@@ -3,6 +3,7 @@ import {CompiledTemplateResult, Template, TemplateMaker, TemplateSlot} from '../
 
 /** 
  * Make it by compiling:
+ * 
  * ```html
  * 	<lu:if ${...}>...</lu:if>
  * 	<lu:elseif ${...}>...</lu:elseif>
@@ -26,6 +27,7 @@ export class IfBlock {
 
 /** 
  * Make it by compiling:
+ * 
  * ```html
  * 	<lu:if ${...} cache>...</lu:if>
  * 	<lu:elseif ${...}>...</lu:elseif>
