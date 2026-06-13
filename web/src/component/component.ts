@@ -157,6 +157,12 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	/** Compiler will add this property after analysis render result. */
 	static SlotContentType: SlotContentType | null = null
 
+	/** 
+	 * Tells the compiler which tag the component should initialize element with.
+	 * You could only `declare static tagName: '...'`, never initialize it.
+	 */
+	declare static tagName: string
+
 
 	/** The root element of component. */
 	readonly el: HTMLElement
