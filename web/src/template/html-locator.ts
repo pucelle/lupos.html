@@ -1,4 +1,4 @@
-import {willHydrate} from '../component'
+import {willHydrateFrom} from '../component'
 import {getComponentByElement} from '../component/from-element'
 
 
@@ -67,10 +67,15 @@ export class HydrateHTMLLocator {
 		this.el = document.createElement('template')
 
 		// Patch to SSR nodes.
-		this.patchNodesRecursively(template.content.childNodes, hydrateNodes, 0)
+		this.patchNodesRecursively(template.content.childNodes, hydrateNodes, 0, false)
 	}
 
-	private patchNodesRecursively(templateNodes: ArrayLike<ChildNode>, hydrateNodes: ArrayLike<ChildNode>, depth: number) {
+	private patchNodesRecursively(
+		templateNodes: ArrayLike<ChildNode>,
+		hydrateNodes: ArrayLike<ChildNode>,
+		depth: number,
+		canCleanRestTNodes: boolean
+	) {
 		let hIndex = 0
 		let latestHNode = hydrateNodes[0]
 
@@ -104,12 +109,13 @@ export class HydrateHTMLLocator {
 
 				// Handle component. 
 				else if ((tNode as Element).hasAttribute('com')) {
-					willHydrate(hNode as Element)
-					
 					this.patchElementAttributes(tNode as Element, hNode as Element)
 
 					if (tNode.childNodes.length > 0) {
 						this.patchRestSlotNodes(tNode as Element, hNode as Element, depth)
+					}
+					else {
+						willHydrateFrom(hNode as Element, 0)
 					}
 				}
 
@@ -169,7 +175,12 @@ export class HydrateHTMLLocator {
 		}
 
 		// Removes redundant nodes.
-		if (hIndex < hydrateNodes.length) {
+		// If is children of a sub component, like `...<Sub>HERE</Sub>`,
+		// Will not remove rest nodes because they may be de newly made contents
+		// inside <Sub>, so we leave them to be handled by <Sub> component.
+		if (hIndex < hydrateNodes.length
+			&& !canCleanRestTNodes
+		) {
 			this.cleanHydrateNodes(templateNodes, hydrateNodes, hIndex)
 		}
 	}
@@ -182,7 +193,10 @@ export class HydrateHTMLLocator {
 		let restSlotMarker = this.walkAndFindMarker(hNode, restSlotMarkerId)
 
 		if (restSlotMarker) {
-			this.patchNodesRecursively(tNode.childNodes, restSlotMarker.parentElement!.childNodes, depth + 1)
+			this.patchNodesRecursively(tNode.childNodes, restSlotMarker.parentElement!.childNodes, depth + 1, true)
+
+			// Nodes from the index are the nodes rendered by sub component itself.
+			willHydrateFrom(hNode, tNode.childNodes.length)
 		}
 
 		// We make a new empty template to cache cloned nodes,
@@ -231,7 +245,7 @@ export class HydrateHTMLLocator {
 
 		// Skip both have no child nodes.
 		else if (hNode.childNodes.length > 0) {
-			this.patchNodesRecursively(tNode.childNodes, hNode.childNodes, depth + 1)
+			this.patchNodesRecursively(tNode.childNodes, hNode.childNodes, depth + 1, false)
 		}
 	}
 

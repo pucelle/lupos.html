@@ -4,8 +4,11 @@ import type {Component} from './component'
 /** To cache `element -> component` map. */
 const ElementComponentMap: WeakMap<Element, Component> = /*#__PURE__*/new WeakMap()
 
-/** To cache elements for components which will be hydrated. */
-const WillHydrateMap: WeakSet<Element> = /*#__PURE__*/new WeakSet()
+/** 
+ * To cache elements for components which will be hydrated.
+ * Map value is the child index should hydrate from.
+ */
+const WillHydrateMap: WeakMap<Element, number> = /*#__PURE__*/new WeakMap()
 
 
 
@@ -28,14 +31,14 @@ export function hasComponentByElement(el: Element): boolean {
 
 
 /** Element related component will be hydrated later. */
-export function willHydrate(el: Element) {
-	WillHydrateMap.add(el)
+export function willHydrateFrom(el: Element, fromChildIndex: number) {
+	WillHydrateMap.set(el, fromChildIndex)
 }
 
 
-/** Check whether an element need to be hydrated. */
-export function needsHydrate(el: Element): boolean {
-	return WillHydrateMap.has(el)
+/** Check the index that a component element need to be hydrated from. */
+export function needsHydrateIndex(el: Element): number | undefined {
+	return WillHydrateMap.get(el)
 }
 
 

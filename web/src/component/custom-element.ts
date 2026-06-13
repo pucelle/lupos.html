@@ -1,4 +1,4 @@
-import {getComponentByElement, willHydrate} from './from-element'
+import {getComponentByElement, willHydrateFrom} from './from-element'
 import {ComponentConstructor} from './types'
 import {PartCallbackParameterMask} from '../part'
 
@@ -79,7 +79,7 @@ export function connectCustomElement(el: HTMLElement): boolean {
 
 		// Will do hydration.
 		if (el.hasAttribute('ssr')) {
-			willHydrate(el)
+			willHydrateFrom(el, 0)
 		}
 
 		let {Com, propertyMap} = CustomElementConstructorMap.get(el.localName)!

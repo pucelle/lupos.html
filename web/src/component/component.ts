@@ -1,6 +1,6 @@
 import {ContextVariableConstructor, EventFirer, Observed, UpdateQueue, beginTrack, endTrack, Updatable, promisify, UnObserved} from 'lupos'
 import {TemplateStyle} from './style'
-import {addElementComponentMap, completeHydration, getComponentByElement, needsHydrate} from './from-element'
+import {addElementComponentMap, completeHydration, getComponentByElement, needsHydrateIndex} from './from-element'
 import {TemplateSlot, SlotPosition, SlotPositionType, CompiledTemplateResult, SlotContentType} from '../template'
 import {ComponentConstructor, RenderResult} from './types'
 import {getComponentSlotParameter, Part, PartCallbackParameterMask} from '../part'
@@ -174,7 +174,10 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	 */
 	readonly iid: number = getIncrementalId()
 
-	/** State of current component, byte mask type. */
+	/** 
+	 * State of current component, byte mask type.
+	 * It's higher bits will be used to cache connect parameter after moving left.
+	 */
 	protected $stateMask: ComponentStateMask | 0 = 0
 
 	/** Help to patch render result to current element. */
@@ -213,7 +216,80 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	 * Always returns `false` after connected.
 	 */
 	get needsHydrate(): boolean {
-		return needsHydrate(this.el)
+		return needsHydrateIndex(this.el) !== undefined
+	}
+
+	afterConnectCallback(this: Component<{}>, param: PartCallbackParameterMask | 0) {
+		if (this.connected) {
+			return
+		}
+
+		let hydrationIndex: number | undefined
+
+		if ((this.$stateMask & ComponentStateMask.Created) === 0) {
+			this.$stateMask |= ComponentStateMask.Created
+			hydrationIndex = needsHydrateIndex(this.el)
+			this.$contentSlot = this.initContentSlot(hydrationIndex)
+			this.onCreated()
+		}
+
+		this.$stateMask |= (ComponentStateMask.Connected | ComponentStateMask.WillCallConnectCallback)
+		this.$stateMask &= ~ComponentStateMask.Disconnecting
+
+		// Call connect callback if not yet.
+		let contentSlotParam = getComponentSlotParameter(param, this.el.localName === 'slot')
+		this.$stateMask |= contentSlotParam << 6
+
+		// Earlier than `onConnected` because may calls `untilUpdated()` there.
+		this.willUpdate()
+
+		// After binding `updated` because may bind more `updated` events in `onConnected`.
+		this.onConnected()
+		this.fire('connected')
+
+		if (hydrationIndex !== undefined) {
+			completeHydration(this.el)
+		}
+	}
+
+	beforeDisconnectCallback(this: Component<{}>, param: PartCallbackParameterMask | 0): Promise<void> | void {
+		let connected = this.connected
+		let disconnecting = this.disconnecting
+
+		// Not connected means already disconnected or disconnecting.
+		let fullyDisconnected = !connected && !disconnecting
+		if (fullyDisconnected) {
+			return
+		}
+
+		if (connected) {
+			this.onWillDisconnect()
+			this.fire('will-disconnect')
+			
+			this.$stateMask &= ~ComponentStateMask.Connected
+
+			// If haven't called connect callback, no need to call disconnect callbacks also.
+			if (this.$stateMask & ComponentStateMask.WillCallConnectCallback) {
+				this.$stateMask &= ~ComponentStateMask.WillCallConnectCallback
+				return
+			}
+		}
+
+		let promise = this.$contentSlot.beforeDisconnectCallback(getComponentSlotParameter(param, this.el.localName === 'slot'))
+
+		// When disconnecting, also broadcast it internally to pick up the promises.
+		if (disconnecting) {
+			return promise
+		}
+
+		// Wait for disconnecting.
+		else if (promise) {
+			this.$stateMask |= ComponentStateMask.Disconnecting
+
+			return promise.then(() => {
+				this.$stateMask &= ~ComponentStateMask.Disconnecting
+			})
+		}
 	}
 
 	/** After any tracked data change, enqueue it to update in next animation frame. */
@@ -237,8 +313,38 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 		}
 
 		this.updateRendering()
+		this.handleUpdated()
+	}
+
+	/** 
+	 * Call connect callbacks if not yet.
+	 * Calls `onUpdated`, fires `updated`.
+	 * Call ready if not yet.
+	 */
+	protected handleUpdated(this: Component<{}>) {
+		
+		// Postpone to connect child after updated.
+		// So it keeps consist with normal enqueuing update logic,
+		// and and visit child references and modify some before it updates.
+		if (this.$stateMask & ComponentStateMask.WillCallConnectCallback) {
+			this.$stateMask &= ~ComponentStateMask.WillCallConnectCallback
+
+			// Separate slot param from state mask.
+			let contentSlotParam = this.$stateMask >> 6
+			this.$stateMask &= 0x3F
+
+			this.$contentSlot.afterConnectCallback(contentSlotParam)
+		}
+
 		this.onUpdated()
 		this.fire('updated')
+
+		
+		// Call ready if not yet.
+		if ((this.$stateMask & ComponentStateMask.ReadyAlready) === 0) {
+			this.$stateMask |= ComponentStateMask.ReadyAlready
+			this.onReady()
+		}
 	}
 
 	/** Update and track rendering contents. */
@@ -273,13 +379,22 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	}
 
 	/** Init `contentSlot`. */
-	protected initContentSlot(hydrationNeeded: boolean): TemplateSlot {
+	protected initContentSlot(fromIndex: number | undefined): TemplateSlot {
 		let position = new SlotPosition<SlotPositionType.AfterContent>(SlotPositionType.AfterContent, this.el)
 		let Com = this.constructor as ComponentConstructor
 
 		// Note here `hydrateNodes` should have at least one element if provided.
-		let hydrateNodes = hydrationNeeded && this.el.childNodes.length > 0 ? this.el.childNodes : undefined
+		let hydrateNodes: ArrayLike<ChildNode> | undefined
 
+		if (fromIndex !== undefined && fromIndex < this.el.childNodes.length) {
+			if (fromIndex === 0) {
+				hydrateNodes = this.el.childNodes
+			}
+			else {
+				hydrateNodes = Array.prototype.slice.call(this.el.childNodes, fromIndex)
+			}
+		}
+	
 		return new TemplateSlot(position, Com.SlotContentType, hydrateNodes)
 	}
 	
@@ -447,96 +562,6 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 		}
 
 		toSlot.append(...this.$restSlotRange.walkNodes())
-	}
-
-	afterConnectCallback(this: Component<{}>, param: PartCallbackParameterMask | 0) {
-		if (this.connected) {
-			return
-		}
-
-		let hydrationNeeded = false
-
-		if ((this.$stateMask & ComponentStateMask.Created) === 0) {
-			this.$stateMask |= ComponentStateMask.Created
-			hydrationNeeded = needsHydrate(this.el)
-			this.$contentSlot = this.initContentSlot(hydrationNeeded)
-			this.onCreated()
-		}
-
-		this.$stateMask |= (ComponentStateMask.Connected | ComponentStateMask.WillCallConnectCallback)
-		this.$stateMask &= ~ComponentStateMask.Disconnecting
-
-		// Postpone to connect child after updated.
-		// So it keeps consist with normal enqueuing update logic,
-		// and and visit child references and modify some before it updates.
-		this.once('updated', () => {
-			if ((this.$stateMask & ComponentStateMask.WillCallConnectCallback) === 0) {
-				return
-			}
-
-			this.$stateMask &= ~ComponentStateMask.WillCallConnectCallback
-			
-			// Call connect callback if not yet.
-			let slotParam = getComponentSlotParameter(param, this.el.localName === 'slot')
-			this.$contentSlot.afterConnectCallback(slotParam)
-
-			// Call ready if not yet.
-			if ((this.$stateMask & ComponentStateMask.ReadyAlready) === 0) {
-				this.$stateMask |= ComponentStateMask.ReadyAlready
-				this.onReady()
-			}
-		})
-
-		// Earlier than `onConnected` because may calls `untilUpdated()` there.
-		this.willUpdate()
-
-		// After binding `updated` because may bind more `updated` events in `onConnected`.
-		this.onConnected()
-		this.fire('connected')
-
-		if (hydrationNeeded) {
-			completeHydration(this.el)
-		}
-	}
-
-	beforeDisconnectCallback(this: Component<{}>, param: PartCallbackParameterMask | 0): Promise<void> | void {
-		let connected = this.connected
-		let disconnecting = this.disconnecting
-
-		// Not connected means already disconnected or disconnecting.
-		let fullyDisconnected = !connected && !disconnecting
-		if (fullyDisconnected) {
-			return
-		}
-
-		if (connected) {
-			this.onWillDisconnect()
-			this.fire('will-disconnect')
-			
-			this.$stateMask &= ~ComponentStateMask.Connected
-
-			// If haven't called connect callback, no need to call disconnect callbacks also.
-			if (this.$stateMask & ComponentStateMask.WillCallConnectCallback) {
-				this.$stateMask &= ~ComponentStateMask.WillCallConnectCallback
-				return
-			}
-		}
-
-		let promise = this.$contentSlot.beforeDisconnectCallback(getComponentSlotParameter(param, this.el.localName === 'slot'))
-
-		// When disconnecting, also broadcast it internally to pick up the promises.
-		if (disconnecting) {
-			return promise
-		}
-
-		// Wait for disconnecting.
-		else if (promise) {
-			this.$stateMask |= ComponentStateMask.Disconnecting
-
-			return promise.then(() => {
-				this.$stateMask &= ~ComponentStateMask.Disconnecting
-			})
-		}
 	}
 
 	/** Whether has some real content rendered. */
