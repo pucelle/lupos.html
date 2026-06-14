@@ -70,12 +70,13 @@ export class HydrateHTMLLocator {
 		this.patchNodesRecursively(template.content.childNodes, hydrateNodes, 0, false)
 	}
 
+	/** Returns the node index which have handled hydration end at. */
 	private patchNodesRecursively(
 		templateNodes: ArrayLike<ChildNode>,
 		hydrateNodes: ArrayLike<ChildNode>,
 		depth: number,
 		canCleanRestTNodes: boolean
-	) {
+	): number {
 		let hIndex = 0
 		let latestHNode = hydrateNodes[0]
 
@@ -183,6 +184,8 @@ export class HydrateHTMLLocator {
 		) {
 			this.cleanHydrateNodes(templateNodes, hydrateNodes, hIndex)
 		}
+
+		return hIndex
 	}
 
 	/** Patch for rest slot nodes. */
@@ -193,10 +196,10 @@ export class HydrateHTMLLocator {
 		let restSlotMarker = this.walkAndFindMarker(hNode, restSlotMarkerId)
 
 		if (restSlotMarker) {
-			this.patchNodesRecursively(tNode.childNodes, restSlotMarker.parentElement!.childNodes, depth + 1, true)
+			let endIndex = this.patchNodesRecursively(tNode.childNodes, restSlotMarker.parentElement!.childNodes, depth + 1, true)
 
 			// Nodes from the index are the nodes rendered by sub component itself.
-			willHydrateFrom(hNode, tNode.childNodes.length)
+			willHydrateFrom(hNode, endIndex)
 		}
 
 		// We make a new empty template to cache cloned nodes,
