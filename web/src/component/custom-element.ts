@@ -79,7 +79,7 @@ export function connectCustomElement(el: HTMLElement): boolean {
 
 		// Will do hydration.
 		if (el.hasAttribute('ssr')) {
-			willHydrateFrom(el, 0)
+			willHydrateFrom(el, el.firstChild)
 		}
 
 		let {Com, propertyMap} = CustomElementConstructorMap.get(el.localName)!

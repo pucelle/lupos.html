@@ -1,6 +1,6 @@
 import {ContextVariableConstructor, EventFirer, Observed, UpdateQueue, beginTrack, endTrack, Updatable, promisify, UnObserved} from 'lupos'
 import {TemplateStyle} from './style'
-import {addElementComponentMap, completeHydration, getComponentByElement, needsHydrateIndex} from './from-element'
+import {addElementComponentMap, completeHydration, getComponentByElement, needsHydrateFrom} from './from-element'
 import {TemplateSlot, SlotPosition, SlotPositionType, CompiledTemplateResult, SlotContentType} from '../template'
 import {ComponentConstructor, RenderResult} from './types'
 import {getComponentSlotParameter, Part, PartCallbackParameterMask} from '../part'
@@ -216,7 +216,7 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	 * Always returns `false` after connected.
 	 */
 	get needsHydrate(): boolean {
-		return needsHydrateIndex(this.el) !== undefined
+		return needsHydrateFrom(this.el) !== undefined
 	}
 
 	afterConnectCallback(this: Component<{}>, param: PartCallbackParameterMask | 0) {
@@ -224,12 +224,12 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 			return
 		}
 
-		let hydrationIndex: number | undefined
+		let hydrationChildFrom: ChildNode | null | undefined
 
 		if ((this.$stateMask & ComponentStateMask.Created) === 0) {
 			this.$stateMask |= ComponentStateMask.Created
-			hydrationIndex = needsHydrateIndex(this.el)
-			this.$contentSlot = this.initContentSlot(hydrationIndex)
+			hydrationChildFrom = needsHydrateFrom(this.el)
+			this.$contentSlot = this.initContentSlot(hydrationChildFrom)
 			this.onCreated()
 		}
 
@@ -247,7 +247,7 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 		this.onConnected()
 		this.fire('connected')
 
-		if (hydrationIndex !== undefined) {
+		if (hydrationChildFrom !== undefined) {
 			completeHydration(this.el)
 		}
 	}
@@ -379,18 +379,20 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	}
 
 	/** Init `contentSlot`. */
-	protected initContentSlot(fromIndex: number | undefined): TemplateSlot {
+	protected initContentSlot(hydrateFromChild: ChildNode | null | undefined): TemplateSlot {
 		let position = new SlotPosition<SlotPositionType.AfterContent>(SlotPositionType.AfterContent, this.el)
 		let Com = this.constructor as ComponentConstructor
 
 		// Note here `hydrateNodes` should have at least one element if provided.
 		let hydrateNodes: ArrayLike<ChildNode> | undefined
 
-		if (fromIndex !== undefined && fromIndex < this.el.childNodes.length) {
+		if (hydrateFromChild) {
+			let fromIndex = Array.prototype.indexOf.call(this.el.childNodes, hydrateFromChild)
+
 			if (fromIndex === 0) {
 				hydrateNodes = this.el.childNodes
 			}
-			else {
+			else if (fromIndex === -1) {
 				hydrateNodes = Array.prototype.slice.call(this.el.childNodes, fromIndex)
 			}
 		}

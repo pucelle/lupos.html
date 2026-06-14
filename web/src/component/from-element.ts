@@ -6,9 +6,9 @@ const ElementComponentMap: WeakMap<Element, Component> = /*#__PURE__*/new WeakMa
 
 /** 
  * To cache elements for components which will be hydrated.
- * Map value is the child index should hydrate from.
+ * Map value is the child node should hydrate from.
  */
-const WillHydrateMap: WeakMap<Element, number> = /*#__PURE__*/new WeakMap()
+const WillHydrateFromMap: WeakMap<Element, ChildNode | null> = /*#__PURE__*/new WeakMap()
 
 
 
@@ -31,19 +31,19 @@ export function hasComponentByElement(el: Element): boolean {
 
 
 /** Element related component will be hydrated later. */
-export function willHydrateFrom(el: Element, fromChildIndex: number) {
-	WillHydrateMap.set(el, fromChildIndex)
+export function willHydrateFrom(el: Element, fromNode: ChildNode | null) {
+	WillHydrateFromMap.set(el, fromNode)
 }
 
 
 /** Check the index that a component element need to be hydrated from. */
-export function needsHydrateIndex(el: Element): number | undefined {
-	return WillHydrateMap.get(el)
+export function needsHydrateFrom(el: Element): ChildNode | null | undefined {
+	return WillHydrateFromMap.get(el)
 }
 
 
 /** To complete hydration of element. */
 export function completeHydration(el: Element) {
-	WillHydrateMap.delete(el)
+	WillHydrateFromMap.delete(el)
 }
 
