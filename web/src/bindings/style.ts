@@ -70,14 +70,7 @@ export class StyleBinding implements Binding {
 		// Also support hydration here.
 		for (let [k, v] of Object.entries(value)) {
 			if (!this.lastStyleValues || v !== this.lastStyleValues[k]) {
-
-				// SSR env can't correctly setting empty value.
-				if (!v) {
-					this.el.style.removeProperty(k)
-				}
-				else {
-					this.el.style.setProperty(k, v)
-				}
+				this.el.style.setProperty(k, v)
 			}
 		}
 
