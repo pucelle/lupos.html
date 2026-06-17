@@ -206,7 +206,7 @@ export class SSR {
 	}
 
 	private formatHTML(html: string) {
-		return html.replace(/ (com|html|ssr)="\w*"(?=[^<>]*>)/g, ' $1')
+		return html.replace(/ (com)="\w*"(?=[^<>]*>)/g, ' $1')
 			.replace(/ iid="\w*"(?=[^<>]*>)/g, '')
 	}
 
