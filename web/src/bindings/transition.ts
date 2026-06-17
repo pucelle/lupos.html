@@ -17,12 +17,6 @@ export interface TransitionOptions {
 	phase?: TransitionPhase
 
 	/**
-	 * Whether play transition immediately after element get initialized.
-	 * Default value is `false`.
-	 */
-	immediate?: boolean
-
-	/**
 	 * Whether play transition when element or any ancestral element get inserted or removed.
 	 * Default value is `false`.
 	 */
@@ -36,16 +30,11 @@ export interface TransitionOptions {
 export type TransitionPhase = 'enter' | 'leave' | 'both' | 'none'
 
 
-/** Cache those bindings that haven't trigger connect callback yet. */
-const NotConnectCallbackForFirstTime: WeakSet<TransitionBinding> = /*#__PURE__*/new WeakSet()
-
-
 /**
  * `:transition` binding can play transition after element connected or before element disconnect.
  * - `<el :transition=${fade({duration, ...})}>`
  * - `<el :transition.local=${...}>`: play transition only when element itself get inserted or removed. `.local` can omit.
  * - `<el :transition.global=${...}>`: play transition when element or any ancestral element get inserted or removed.
- * - `<el :transition.immediate=${...}>`: play transition immediately after element get initialized.
  * - `<el :transition=${() => {...}}>`: Get transition result by a function, useful for leave transition to update transition parameters.
  * 
  * `:transition` binding will dispatch 4 events on the target element:
@@ -60,16 +49,14 @@ export class TransitionBinding implements Binding, Part {
 	protected connectedState: PartConnectedState = PartConnectedState.Disconnected
 	protected result: TransitionResult | null | (() => TransitionResult | null) = null
 	protected phase: TransitionPhase = 'both'
-	protected immediate: boolean = false
 	protected global: boolean = false
 	protected transition: Transition
 
-	constructor(el: Element, _context: any, modifiers: ('global' | 'immediate' | 'enter' | 'leave')[] | null = null) {
+	constructor(el: Element, _context: any, modifiers: ('global' | 'enter' | 'leave')[] | null = null) {
 		this.el = el
 
 		if (modifiers) {
 			this.global = modifiers.includes('global')
-			this.immediate = modifiers.includes('immediate')
 
 			if (modifiers.includes('enter')) {
 				this.phase = 'enter'
@@ -80,8 +67,6 @@ export class TransitionBinding implements Binding, Part {
 		}
 
 		this.transition = new Transition(this.el)
-
-		NotConnectCallbackForFirstTime.add(this)
 	}
 
 	afterConnectCallback(param: PartCallbackParameterMask | 0) {
@@ -101,15 +86,6 @@ export class TransitionBinding implements Binding, Part {
 
 	/** Test whether should play enter transition. */
 	protected shouldPlayEnter(param: PartCallbackParameterMask | 0): boolean {
-
-		// Prevent first time enter transition playing if not `immediate`.
-		if (NotConnectCallbackForFirstTime.has(this)) {
-			NotConnectCallbackForFirstTime.delete(this)
-
-			if (!this.immediate) {
-				return false
-			}
-		}
 
 		// Connect immediately manually, no need to play transition.
 		if (param & PartCallbackParameterMask.MoveImmediately) {
@@ -195,10 +171,6 @@ export class TransitionBinding implements Binding, Part {
 		if (options) {
 			if (options.global !== undefined) {
 				this.global = options.global
-			}
-
-			if (options.immediate !== undefined) {
-				this.immediate = options.immediate
 			}
 
 			if (options.phase !== undefined) {
