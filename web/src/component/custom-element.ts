@@ -67,7 +67,7 @@ function defineCallbacks(name: string) {
  * Calls connect callback of specified custom element.
  * Returns whether truly connected.
  */
-export function connectCustomElement(el: HTMLElement): boolean {
+export async function connectCustomElement(el: HTMLElement): Promise<boolean> {
 	if (!CustomElementConstructorMap.has(el.localName)) {
 		return false
 	}
@@ -80,6 +80,11 @@ export function connectCustomElement(el: HTMLElement): boolean {
 		// Will do hydration.
 		if (el.hasAttribute('ssr')) {
 			willHydrateFrom(el, el.firstChild)
+
+			// Wait for gate promises resolved.
+			if (hydrationGates) {
+				await Promise.all(hydrationGates)
+			}
 		}
 
 		let {Com, propertyMap} = CustomElementConstructorMap.get(el.localName)!
@@ -127,4 +132,27 @@ function onCustomElementDisconnected(el: HTMLElement) {
 		
 		console.warn(`Suggest you DON'T remove custom element directly, which will cause disconnect action cant work as expected! but remove component instead.`)
 	}
+}
+
+
+let hydrationGates: Promise<any>[] | null = null
+
+/** 
+ * Add hydration gates, which is a promise list,
+ * after which resolved hydration can be continued.
+ */
+export function addHydrationGates(...gates: Promise<any>[]) {
+	if (!hydrationGates) {
+		hydrationGates = []
+	}
+
+	hydrationGates.push(...gates)
+
+	Promise.all(gates).then(() => {
+		hydrationGates = hydrationGates!.filter(g => !gates.includes(g))
+
+		if (hydrationGates.length === 0) {
+			hydrationGates = null
+		}
+	})
 }
