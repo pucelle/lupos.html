@@ -1,6 +1,6 @@
 import {UpdateQueue} from 'lupos'
 import * as linkedom from 'linkedom'
-import {Component, connectCustomElement, flushStyles, render, RenderResult, resetInSSR, resetOnPageInit} from '../../web/out'
+import {Component, connectCustomElement, flushStyles, render, RenderResult, resetInSSR, resetOnPageInit, untilHydrationGates} from '../../web/out'
 
 
 // Cache page init callbacks.
@@ -193,6 +193,13 @@ export class SSR {
 	 * `tagName` can be used to render to custom tag, for later hydration easier.
 	 */
 	async renderComponent(Com: typeof Component, tagName: string = 'div', promiseToWait: (() => Promise<any>) | null = null): Promise<string> {
+		
+		// Wait for gate promises resolved.
+		let promise = untilHydrationGates()
+		if (promise) {
+			await promise
+		}
+
 		let com = new Com(document.createElement(tagName))
 		await com.connectManually()
 		await UpdateQueue.untilComplete()
@@ -248,16 +255,16 @@ export class SSR {
 	 * and inject them to a html template.
 	 */
 	async toString(): Promise<string> {
-		this.connectCustomElements(this.document.body)
+		await this.connectCustomElements(this.document.body)
 		await UpdateQueue.untilComplete()
 
 		let output = this.document.toString()
 		return output
 	}
 
-	private connectCustomElements(root: Node) {
+	private async connectCustomElements(root: Node) {
 		for (let el of this.walkCustomElements(root)) {
-			let connected = connectCustomElement(el)
+			let connected = await connectCustomElement(el)
 
 			// Indicates it's come from ssr.
 			if (connected) {
