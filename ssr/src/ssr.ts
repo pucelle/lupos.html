@@ -184,7 +184,11 @@ export class SSR {
 		await rendered.connectManually()
 
 		await UpdateQueue.untilComplete()
-		return this.formatHTML(rendered.el.innerHTML)
+		let html = this.formatHTML(rendered.el.innerHTML)
+
+		rendered.remove(true)
+
+		return html
 	}
 
 	/** 
@@ -209,7 +213,11 @@ export class SSR {
 		}
 
 		com.el.setAttribute('ssr', '')
-		return this.formatHTML(com.el.outerHTML)
+		let html = this.formatHTML(com.el.outerHTML)
+
+		com.remove(true)
+
+		return html
 	}
 
 	private formatHTML(html: string) {
