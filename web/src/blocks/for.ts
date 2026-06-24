@@ -158,12 +158,18 @@ export class ForBlock<T = any> implements Updatable {
 			}
 
 			newT.update(result.values)
+
+			if (this.slot.connectedState === PartConnectedState.Connected) {
+				newT.afterConnectCallback(PartCallbackParameterMask.FromOwnStateChange | PartCallbackParameterMask.AsDirectNode)
+			}
+			
 			this.templates.push(newT)
 		}
 
 		splitter.clear()
 		this.slot.updateExternalTemplateList(this.templates)
 
+		this.oldData = this.newData
 		this.hydrateNodes = undefined
 	}
 

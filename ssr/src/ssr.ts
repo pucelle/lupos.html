@@ -1,6 +1,6 @@
 import {UpdateQueue} from 'lupos'
 import * as linkedom from 'linkedom'
-import {Component, connectCustomElement, flushStyles, render, RenderResult, resetInSSR, resetOnPageInit, untilHydrationGates} from '../../web/out'
+import {Component, connectCustomElement, flushStyles, render, RenderResult, resetInSSR, resetOnPageInit, waitHydrationGates} from '../../web/out'
 
 
 // Cache page init callbacks.
@@ -199,7 +199,7 @@ export class SSR {
 	async renderComponent(Com: typeof Component, tagName: string = 'div', promiseToWait: (() => Promise<any>) | null = null): Promise<string> {
 		
 		// Wait for gate promises resolved.
-		let promise = untilHydrationGates()
+		let promise = waitHydrationGates()
 		if (promise) {
 			await promise
 		}

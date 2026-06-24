@@ -82,7 +82,7 @@ export async function connectCustomElement(el: HTMLElement): Promise<boolean> {
 			willHydrateFrom(el, el.firstChild)
 
 			// Wait for gate promises resolved.
-			let promise = untilHydrationGates()
+			let promise = waitHydrationGates()
 			if (promise) {
 				await promise
 			}
@@ -136,6 +136,7 @@ function onCustomElementDisconnected(el: HTMLElement) {
 }
 
 
+
 let hydrationGates: Promise<any>[] | null = null
 
 /** 
@@ -158,9 +159,8 @@ export function addHydrationGates(...gates: Promise<any>[]) {
 	})
 }
 
-
 /** Wait for gate promises resolved. */
-export function untilHydrationGates(): Promise<any> | undefined {
+export function waitHydrationGates(): Promise<any> | undefined {
 	if (hydrationGates) {
 		return Promise.all(hydrationGates)
 	}
