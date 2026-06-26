@@ -1,10 +1,10 @@
 /** Whether in SSR environment. */
-export let inSSR = false
+export let IN_SSR = false
 
 
-/** Update `inSSR` variable, only for SSR env. */
-export function resetInSSR(value: boolean) {
-	inSSR = value
+/** Update `IN_SSR` variable, only for SSR env. */
+export function reset_IN_SSR(value: boolean) {
+	IN_SSR = value
 }
 
 

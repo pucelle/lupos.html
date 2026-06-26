@@ -1,6 +1,6 @@
 import {UpdateQueue} from 'lupos'
 import * as linkedom from 'linkedom'
-import {Component, connectCustomElement, flushStyles, render, RenderResult, resetInSSR, resetOnPageInit, waitHydrationGates} from '../../web/out'
+import {Component, connectCustomElement, flushStyles, render, RenderResult, reset_IN_SSR, resetOnPageInit, waitHydrationGates} from '../../web/out'
 
 
 // Cache page init callbacks.
@@ -16,7 +16,7 @@ resetOnPageInit(onPageInit)
 
 
 // For SSR environment.
-resetInSSR(true)
+reset_IN_SSR(true)
 
 
 // Missing in Linkedom env.

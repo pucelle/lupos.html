@@ -1,6 +1,6 @@
 import {Effector, Updatable, UpdateQueue} from 'lupos'
 import {TemplateResult} from '../template'
-import {inSSR} from '../ssr'
+import {IN_SSR} from '../ssr'
 
 
 /** Type of the values returned from `Component.style()`. */
@@ -28,7 +28,7 @@ class ToUpdateStyle implements Updatable {
 		})
 
 		// When SSR, not enqueue.
-		if (this.styles.length === 1 && !inSSR) {
+		if (this.styles.length === 1 && !IN_SSR) {
 			this.willUpdate()
 		}
 	}

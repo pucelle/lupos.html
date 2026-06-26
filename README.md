@@ -140,7 +140,7 @@ Use `SSR` export from `lupos/ssr` to do server side rendering, work in node, bun
 
 You should render a entry component by `ssr.renderComponent`, and render css styles by `ssr.renderStyles`, and then interpolate them into the final HTML codes.
 
-You should also add following codes to your `webpack.config.js` to exclude outputting style (which SSR had rendered).
+You should also add following codes to your `webpack.config.js` to exclude outputting style (which SSR had rendered), and eliminate useless SSR codes.
 
 ```js
 module: {
@@ -149,8 +149,16 @@ module: {
 			test: /\.js$/,
 			loader: 'string-replace-loader',
 			options: {
-				search: /static style = .+/g, 
-				replace: '',
+				multiple: [
+					{
+						search: /\bstatic style = .+/g, 
+						replace: '',
+					},
+					{
+						search: /\bIN_SSR(?!\s*[=\},])/g, 
+						replace: 'false',
+					},
+				]
 			}
 		}
 	]
