@@ -81,10 +81,6 @@ class ToUpdateStyle implements Updatable {
 	 * So you may put overwritten styles after script tag to avoid conflict.
 	 */
 	private createStyleElement(type: 'static' | 'dynamic', code: TemplateStyle | string, scriptTag: HTMLElement | null) {
-		if (type === 'static' && document.querySelector('style[ssr]')) {
-			return
-		}
-
 		let styleTag = document.createElement('style')
 		styleTag.setAttribute(type, '')
 
@@ -136,9 +132,8 @@ export function addStyle(style: TemplateStyle) {
  * Normally only for SSR rendering.
  * Can be called for multiple times.
  */
-export async function flushStyles() {
+export function flushStyles() {
 	if (toUpdateStyle) {
-		toUpdateStyle.willUpdate()
-		await UpdateQueue.untilComplete()
+		toUpdateStyle.update()
 	}
 }

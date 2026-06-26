@@ -136,7 +136,7 @@ export class Checkbox extends Component {
 
 ## SSR & Hydration
 
-Use `SSR` export from `lupos/ssr` to do server side rendering, work in node, bun and workers.
+Use `SSR` export from `lupos/ssr` to do server side rendering, work in node, bun and workers. You may need to import it firstly to simulate a browser like environment.
 
 You should render a entry component by `ssr.renderComponent`, and render css styles by `ssr.renderStyles`, and then interpolate them into the final HTML codes.
 

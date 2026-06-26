@@ -237,12 +237,14 @@ export class SSR {
 	 * Render all style codes which declared by css`...`.
 	 * Although it can be called for multiple times, we would suggest
 	 * you to import all components firstly, and render it for only once.
+	 * 
+	 * If `includeStyleTag` is `true`, will render `<style>...</style>`.
 	 */
-	async renderStyles(): Promise<string> {
+	renderStyles(includeStyleTag: boolean = false): string {
 		
 		// Flush styles after context initialized.
 		if (!this.styleFlushed) {
-			await flushStyles()
+			flushStyles()
 			this.styleFlushed = true
 		}
 
@@ -252,9 +254,8 @@ export class SSR {
 		}
 
 		style.removeAttribute('static')
-		style.setAttribute('ssr', '')
 
-		return this.formatHTML(style.outerHTML)
+		return this.formatHTML(includeStyleTag ? style.outerHTML : style.textContent)
 	}
 
 	/** 
