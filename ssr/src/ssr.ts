@@ -121,7 +121,6 @@ export class SSR {
 	/** Set default domain for SSR. */
 	static setDomain(domain: string) {
 		this.domain = domain
-		globalThis.location = new URL(domain) as any
 	}
 
 
@@ -140,10 +139,10 @@ export class SSR {
 	private initWindow(): Window {
 		let parseHTML = linkedom.parseHTML as any
 
-		let {window: win} = parseHTML('<!DOCTYPE html><html><head></head><body></body></html>', {
-			location: new URL(this.uri, SSR.domain)
-		})
+		let {window: win} = parseHTML('<!DOCTYPE html><html><head></head><body></body></html>')
+		win.location = new URL(this.uri, SSR.domain)
 
+		
 		let global = globalThis as any
 
 		global.window = win
