@@ -121,6 +121,9 @@ export class SSR {
 	/** Set default domain for SSR. */
 	static setDomain(domain: string) {
 		this.domain = domain
+
+		// Must set global location early before any SSR.
+		globalThis.location = new URL(domain) as any
 	}
 
 

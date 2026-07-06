@@ -1,6 +1,6 @@
-import {ContextVariableConstructor, EventFirer, Observed, UpdateQueue, beginTrack, endTrack, Updatable, promisify, UnObserved} from 'lupos'
+import {ContextVariableConstructor, EventFirer, Observed, UpdateQueue, beginTrack, endTrack, Updatable, promisify, UnObserved, untrack} from 'lupos'
 import {TemplateStyle} from './style'
-import {addElementComponentMap, completeHydration, getComponentByElement, needsHydrateFrom} from './from-element'
+import {addElementComponentMap, deleteElementComponentMap, completeHydration, getComponentByElement, needsHydrateFrom} from './from-element'
 import {TemplateSlot, SlotPosition, SlotPositionType, CompiledTemplateResult, SlotContentType} from '../template'
 import {ComponentConstructor, RenderResult} from './types'
 import {getComponentSlotParameter, Part, PartCallbackParameterMask} from '../part'
@@ -192,7 +192,6 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	constructor(el: HTMLElement = document.createElement('div')) {
 		super()
 		this.el = el
-		addElementComponentMap(el, this)
 	}
 
 	/** 
@@ -244,6 +243,7 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 		this.willUpdate()
 
 		// After binding `updated` because may bind more `updated` events in `onConnected`.
+		addElementComponentMap(this.el, this)
 		this.onConnected()
 		this.fire('connected')
 
@@ -263,6 +263,8 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 		}
 
 		if (connected) {
+			untrack(this)
+			deleteElementComponentMap(this.el)
 			this.onWillDisconnect()
 			this.fire('will-disconnect')
 			

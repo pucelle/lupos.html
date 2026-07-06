@@ -12,9 +12,15 @@ const WillHydrateFromMap: WeakMap<Element, ChildNode | null> = /*#__PURE__*/new 
 
 
 
-/** Add an `element -> component` map after component created. */
+/** Add an `element -> component` map after component connected. */
 export function addElementComponentMap(el: Element, com: Component) {
 	ElementComponentMap.set(el, com)
+}
+
+
+/** Delete `element -> component` map after component disconnected. */
+export function deleteElementComponentMap(el: Element) {
+	ElementComponentMap.delete(el)
 }
 
 
