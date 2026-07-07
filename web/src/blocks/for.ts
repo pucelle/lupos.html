@@ -1,7 +1,7 @@
 import {EditType, getEditRecord} from '../structs/edit'
 import {CompiledTemplateResult, HydrateNodesSplitter, Template, TemplateSlot} from '../template'
-import {PartCallbackParameterMask, PartConnectedState} from '../part'
-import {beginTrack, endTrack, Updatable, UpdateQueue} from 'lupos'
+import {Part, PartCallbackParameterMask, PartConnectedState} from '../part'
+import {beginTrack, endTrack, untrack, Updatable, UpdateQueue} from 'lupos'
 import {getIncrementalId} from '../iid'
 
 
@@ -22,12 +22,13 @@ type ForBlockRenderFn = (item: any, index: number) => CompiledTemplateResult
  * 	`}</lu:for>
  * ```
  */
-export class ForBlock<T = any> implements Updatable {
+export class ForBlock<T = any> implements Updatable, Part {
 
 	readonly iid: number = getIncrementalId()
 	readonly slot: TemplateSlot
 	readonly context: any
 
+	private connected: boolean = false
 	private hydrateNodes: ArrayLike<ChildNode> | undefined
 	private renderFn!: ForBlockRenderFn
 	private oldData: T[] = []
@@ -46,16 +47,34 @@ export class ForBlock<T = any> implements Updatable {
 		}
 
 		this.renderFn = renderFn
-		this.willUpdate()
+	}
+
+	afterConnectCallback(_param: PartCallbackParameterMask | 0) {
+		if (!this.connected) {
+			this.connected = true
+			this.willUpdate()
+		}
+	}
+
+	beforeDisconnectCallback(_param: PartCallbackParameterMask | 0) {
+		
+		// The bound slot will help to manage all the contents,
+		// here we have the only need to manage tracking state.
+		if (this.connected) {
+			this.connected = false
+			untrack(this)
+		}
 	}
 
 	/** Update data items. */
 	updateData(data: Iterable<T>) {
 
-		// Must clone, will compare it with the data at next time updating.
+		// Must clone, will compare it with the data when next time updating.
 		this.newData = [...data]
 
-		this.willUpdate()
+		if (this.connected) {
+			this.willUpdate()
+		}
 	}
 
 	willUpdate() {

@@ -192,6 +192,9 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	constructor(el: HTMLElement = document.createElement('div')) {
 		super()
 		this.el = el
+
+		// Add the reference, so `:ref` can pick current com before it connected.
+		addElementComponentMap(this.el, this)
 	}
 
 	/** 
@@ -231,6 +234,9 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 			this.$contentSlot = this.initContentSlot(hydrationChildFrom)
 			this.onCreated()
 		}
+		else {
+			addElementComponentMap(this.el, this)
+		}
 
 		this.$stateMask |= (ComponentStateMask.Connected | ComponentStateMask.WillCallConnectCallback)
 		this.$stateMask &= ~ComponentStateMask.Disconnecting
@@ -243,7 +249,6 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 		this.willUpdate()
 
 		// After binding `updated` because may bind more `updated` events in `onConnected`.
-		addElementComponentMap(this.el, this)
 		this.onConnected()
 		this.fire('connected')
 
