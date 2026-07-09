@@ -90,12 +90,8 @@ export class HydrateHTMLLocator {
 				this.walkAndMapMarkers(hNode as Element)
 
 				latestHNode.after(hNode)
-				latestHNode = hNode
-				hIndex++
-				continue
 			}
-
-			if (tNode.nodeType === Node.ELEMENT_NODE) {
+			else if (tNode.nodeType === Node.ELEMENT_NODE) {
 				let hNodeMismatch = hNode.nodeType !== Node.ELEMENT_NODE
 					|| (hNode as Element).localName !== (tNode as Element).localName
 
