@@ -50,7 +50,9 @@ export class on implements Binding, Part {
 	}
 
 	afterConnectCallback(_param: PartCallbackParameterMask | 0) {
-		this.unbindDifferentTypeBound()
+		if (this.boundType && this.boundType !== this.type) {
+			this.unbindBound()
+		}
 
 		if (this.boundType === null && this.type !== null) {
 			if (SimulatedEvents.hasType(this.type)) {
@@ -67,17 +69,15 @@ export class on implements Binding, Part {
 		}
 	}
 
-	protected unbindDifferentTypeBound() {
-		if (this.boundType && this.boundType !== this.type) {
-			if (SimulatedEvents.hasType(this.boundType)) {
-				SimulatedEvents.off(this.el, this.boundType as SimulatedEvents.EventType, this.handle as any, this)
-			}
-			else {
-				DOMEvents.off(this.el, this.boundType, this.handle, this)
-			}
-
-			this.boundType = null
+	protected unbindBound() {
+		if (SimulatedEvents.hasType(this.boundType!)) {
+			SimulatedEvents.off(this.el, this.boundType as SimulatedEvents.EventType, this.handle as any, this)
 		}
+		else {
+			DOMEvents.off(this.el, this.boundType!, this.handle, this)
+		}
+
+		this.boundType = null
 	}
 
 	protected handle(...args: any[]) {
@@ -85,7 +85,8 @@ export class on implements Binding, Part {
 	}
 
 	beforeDisconnectCallback(_param: PartCallbackParameterMask | 0) {
-		this.type = null
-		this.unbindDifferentTypeBound()
+		if (this.boundType) {
+			this.unbindBound()
+		}
 	}
 }
