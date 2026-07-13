@@ -160,6 +160,9 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	/** 
 	 * Tells the compiler which tag the component should initialize element with.
 	 * You could only `declare static tagName: '...'`, never initialize it.
+	 * 
+	 * Note for components that may get initialized by `new XXX()` manually,
+	 * you should also reset constructor default element parameter.
 	 */
 	declare static tagName: string
 
