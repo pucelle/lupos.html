@@ -161,6 +161,9 @@ export class HydrateHTMLLocator {
 					let newText = tNode.cloneNode(true) as ChildNode
 					hNode!.before(newText)
 				}
+				else {
+					hNode.textContent = tNode.textContent
+				}
 			}
 
 			if (depth === 0) {
