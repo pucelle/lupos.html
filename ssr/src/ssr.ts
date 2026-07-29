@@ -229,10 +229,10 @@ export class SSR {
 
 	/** 
 	 * Render document title, include `<title>` tag.
-	 * Must after some components rendered.
+	 * Must after some components rendered, or will return `null`.
 	 */
-	renderTitle(): string {
-		return this.document.head.querySelector('title')!.outerHTML
+	renderTitle(): string | null {
+		return this.document.head.querySelector('title')?.outerHTML ?? null
 	}
 
 	/** 
