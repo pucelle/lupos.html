@@ -6,6 +6,7 @@ import {NodeTemplateMaker, TextTemplateMaker} from './template-makers'
 import {TemplateMaker} from './template-maker'
 import {HydrateNodesSplitter} from './hydration-splitter'
 import {PrimitiveRenderResult, RenderResult} from '../component'
+import {IN_DEV} from 'lupos'
 
 
 /** 
@@ -364,6 +365,10 @@ export class TemplateSlot<T extends SlotContentType | null = SlotContentType | n
 		for (let i = 0; i < trs.length; i++) {
 			let oldT = i < content.length ? content[i] : null
 			let tr = trs[i]
+
+			if (IN_DEV && !(tr instanceof CompiledTemplateResult)) {
+				throw new Error(`List content within a '\${[...]}' must all be TemplateResult`)
+			}
 
 			if (oldT && oldT.canUpdateBy(tr)) {
 				oldT.update(tr.values)
