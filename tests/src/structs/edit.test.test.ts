@@ -11,16 +11,19 @@ function restoredGraphEditOld<T>(oldItems: T[], newItems: T[], willReuse: boolea
 		if (r.type === EditType.Leave) {
 			
 		}
+		else if (r.type === EditType.LeaveModify) {
+			oldObjItems[r.fromIndex].v = newItems[r.toIndex]
+		}
 		else if (r.type === EditType.Move) {
 			remove(liveObjItems, oldObjItems[r.fromIndex])
 
-			let liveIndex = r.insertIndex < oldObjItems.length ? liveObjItems.indexOf(oldObjItems[r.insertIndex]) : liveObjItems.length
+			let liveIndex = r.insertIndex >= 0 && r.insertIndex < oldObjItems.length ? liveObjItems.indexOf(oldObjItems[r.insertIndex]) : liveObjItems.length
 			liveObjItems.splice(liveIndex, 0, oldObjItems[r.fromIndex])
 		}
 		else if (r.type === EditType.MoveModify) {
 			remove(liveObjItems, oldObjItems[r.fromIndex])
 			
-			let liveIndex = r.insertIndex < oldObjItems.length ? liveObjItems.indexOf(oldObjItems[r.insertIndex]) : liveObjItems.length
+			let liveIndex = r.insertIndex >= 0 && r.insertIndex < oldObjItems.length ? liveObjItems.indexOf(oldObjItems[r.insertIndex]) : liveObjItems.length
 			liveObjItems.splice(liveIndex, 0, oldObjItems[r.fromIndex])
 
 			oldObjItems[r.fromIndex].v = newItems[r.toIndex]
@@ -29,7 +32,7 @@ function restoredGraphEditOld<T>(oldItems: T[], newItems: T[], willReuse: boolea
 			remove(liveObjItems, oldObjItems[r.fromIndex])
 		}
 		else if (r.type === EditType.Insert) {
-			let liveIndex = r.insertIndex < oldObjItems.length ? liveObjItems.indexOf(oldObjItems[r.insertIndex]) : liveObjItems.length
+			let liveIndex = r.insertIndex >= 0 && r.insertIndex < oldObjItems.length ? liveObjItems.indexOf(oldObjItems[r.insertIndex]) : liveObjItems.length
 			liveObjItems.splice(liveIndex, 0, {v: newItems[r.toIndex]})
 		}
 	}
@@ -62,6 +65,9 @@ function restoredGraphEditNew<T>(oldItems: T[], newItems: T[], willReuse: boolea
 
 	for (let r of record) {
 		if (r.type === EditType.Leave) {
+			restored.push(newItems[r.toIndex])
+		}
+		else if (r.type === EditType.LeaveModify) {
 			restored.push(newItems[r.toIndex])
 		}
 		else if (r.type === EditType.Move) {
@@ -150,7 +156,7 @@ describe('Test Graph Edit', () => {
 		expect(getEditRecord(b, a, true)).toEqual([
 			{type: EditType.Leave, insertIndex: -1, fromIndex: 1, toIndex: 0},
 			{type: EditType.Leave, insertIndex: -1, fromIndex: 2, toIndex: 1},
-			{type: EditType.Move, insertIndex: 3, fromIndex: 0, toIndex: 2},
+			{type: EditType.Move, insertIndex: -1, fromIndex: 0, toIndex: 2},
 		])
 
 		expect(restoredGraphEditOld(a, b, true)).toEqual(b)
@@ -178,7 +184,7 @@ describe('Test Graph Edit', () => {
 		expect(getEditRecord(b, a, true)).toEqual([
 			{type: EditType.Leave, insertIndex: -1, fromIndex: 1, toIndex: 0},
 			{type: EditType.Leave, insertIndex: -1, fromIndex: 2, toIndex: 1},
-			{type: EditType.MoveModify, insertIndex: 3, fromIndex: 0, toIndex: 2},
+			{type: EditType.MoveModify, insertIndex: -1, fromIndex: 0, toIndex: 2},
 		])
 
 		expect(getEditRecord(a, b, false)).toEqual([
@@ -191,7 +197,7 @@ describe('Test Graph Edit', () => {
 		expect(getEditRecord(b, a, false)).toEqual([
 			{type: EditType.Leave, insertIndex: -1, fromIndex: 1, toIndex: 0},
 			{type: EditType.Leave, insertIndex: -1, fromIndex: 2, toIndex: 1},
-			{type: EditType.Insert, insertIndex: 3, fromIndex: -1, toIndex: 2},
+			{type: EditType.Insert, insertIndex: -1, fromIndex: -1, toIndex: 2},
 			{type: EditType.Delete, insertIndex: -1, fromIndex: 0, toIndex: -1},
 		])
 
@@ -221,7 +227,7 @@ describe('Test Graph Edit', () => {
 		expect(getEditRecord(b, a, true)).toEqual([
 			{type: EditType.Leave, insertIndex: -1, fromIndex: 2, toIndex: 0},
 			{type: EditType.Leave, insertIndex: -1, fromIndex: 3, toIndex: 1},
-			{type: EditType.MoveModify, insertIndex: 4, fromIndex: 0, toIndex: 2},
+			{type: EditType.MoveModify, insertIndex: -1, fromIndex: 0, toIndex: 2},
 			{type: EditType.Delete, insertIndex: -1, fromIndex: 1, toIndex: -1},
 		])
 
@@ -250,7 +256,7 @@ describe('Test Graph Edit', () => {
 		expect(getEditRecord(b, a, true)).toEqual([
 			{type: EditType.Leave, insertIndex: -1, fromIndex: 0, toIndex: 0},
 			{type: EditType.Leave, insertIndex: -1, fromIndex: 2, toIndex: 1},
-			{type: EditType.MoveModify, insertIndex: 3, fromIndex: 1, toIndex: 2},
+			{type: EditType.MoveModify, insertIndex: -1, fromIndex: 1, toIndex: 2},
 		])
 
 		expect(restoredGraphEditOld(a, b, true)).toEqual(b)

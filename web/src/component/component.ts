@@ -399,10 +399,10 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 		if (hydrateFromChild) {
 			let fromIndex = Array.prototype.indexOf.call(this.el.childNodes, hydrateFromChild)
 
-			if (fromIndex === 0) {
+			if (fromIndex <= 0) {
 				hydrateNodes = this.el.childNodes
 			}
-			else if (fromIndex === -1) {
+			else {
 				hydrateNodes = Array.prototype.slice.call(this.el.childNodes, fromIndex)
 			}
 		}

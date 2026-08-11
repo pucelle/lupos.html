@@ -294,17 +294,17 @@ export class Transition {
 			let props = propsArray[i]
 			let type = this.getTransitionType(props)
 
+			// Options exclude null or undefined transition properties.
+			let options = cleanEmptyValues({
+				duration: props.duration,
+				easing: props.easing,
+				delay: props.delay,
+			})
+
 			if (this.mixedTransitions.length < i + 1
 				|| !this.isExistingMixedTransitionMatch(this.mixedTransitions[i], type, props)
 			) {
 				let transition: PerFrameTransition | WebTransition
-
-				// Options exclude null or undefined transition properties.
-				let options = cleanEmptyValues({
-					duration: props.duration,
-					easing: props.easing,
-					delay: props.delay,
-				})
 
 				if (type === MixedTransitionType.PerFrame) {
 					transition = new PerFrameTransition(options)
@@ -315,6 +315,16 @@ export class Transition {
 				}
 
 				this.mixedTransitions[i] = {type, transition, props}
+			}
+			else {
+				let mixed = this.mixedTransitions[i]
+				
+				let defaultOptions = type === MixedTransitionType.PerFrame
+					? PerFrameTransition.DefaultOptions
+					: WebTransition.DefaultOptions
+
+				mixed.transition.assignOptions({...defaultOptions, ...options})
+				mixed.props = props
 			}
 		}
 

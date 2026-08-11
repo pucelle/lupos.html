@@ -15,7 +15,7 @@ describe('Hydration for template', () => {
 
 		let {com, compare} = await hydrateCom(Test)
 		com.prop = 'def'
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		compare()
 		expect(com.el.firstElementChild!.getAttribute('prop')).toBe('def')
@@ -32,7 +32,7 @@ describe('Hydration for template', () => {
 
 		let {com, compare} = await hydrateCom(Test)
 		com.text = 'def'
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		compare()
 		expect(com.el.firstElementChild!.textContent).toBe('def')
@@ -53,7 +53,7 @@ describe('Hydration for template', () => {
 
 		let {com, compare} = await hydrateCom(Test)
 		com.text = 'def'
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		compare()
 		expect(com.el.firstElementChild!.firstElementChild!.textContent).toBe('def')
@@ -78,7 +78,7 @@ describe('Hydration for template', () => {
 
 		let {com, compare} = await hydrateCom(Test)
 		com.text = 'def'
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		compare()
 		expect(com.el.firstElementChild!.firstElementChild!.firstElementChild!.textContent).toBe('def')
@@ -99,7 +99,7 @@ describe('Hydration for template', () => {
 
 		let {com, compare} = await hydrateCom(Test)
 		com.text = 'def'
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		compare()
 		expect(com.el.firstElementChild!.firstElementChild!.textContent).toBe('def')
@@ -127,7 +127,7 @@ describe('Hydration for template', () => {
 
 		let {com, compare} = await hydrateCom(Test)
 		com.text = 'def'
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		compare()
 		expect(com.el.firstElementChild!.firstElementChild!.textContent).toBe('def')
@@ -135,7 +135,7 @@ describe('Hydration for template', () => {
 
 		let {com: com1, compare: compare1} = await hydrateCom(Test1)
 		com1.text = 'def'
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		compare1()
 		expect(com1.el.firstElementChild!.firstElementChild!.textContent).toBe('def')

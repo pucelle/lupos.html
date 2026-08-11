@@ -15,7 +15,7 @@ describe('Hydration for component', () => {
 
 		let {com, compare} = await hydrateCom(Test)
 		com.prop = 'def'
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		compare()
 		expect(com.el.getAttribute('prop')).toBe('def')
@@ -36,7 +36,7 @@ describe('Hydration for component', () => {
 		}
 
 		let {compare} = await hydrateCom(Test)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		compare()
 	})
 
@@ -55,7 +55,7 @@ describe('Hydration for component', () => {
 		}
 
 		let {compare} = await hydrateCom(Test)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		compare()
 	})
 
@@ -74,7 +74,7 @@ describe('Hydration for component', () => {
 		}
 
 		let {com, compare} = await hydrateCom(Parent)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		compare()
 		expect(com.el.firstElementChild!.firstElementChild!.textContent).toBe('rest slot content')

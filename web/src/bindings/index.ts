@@ -1,6 +1,7 @@
 export * from './types'
 export * from './class'
 export * from './html'
+export * from './unsafe-html'
 export * from './ref'
 export * from './style'
 export * from './transition'

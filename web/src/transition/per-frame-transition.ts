@@ -143,6 +143,7 @@ export class PerFrameTransition<T extends TransitionAbleValue = any> extends Eve
 
 		if (changed) {
 			this.easingFn = getEasingFunction(this.options.easing)
+			this.delayTimeout.ms = this.options.delay
 		}
 
 		return changed

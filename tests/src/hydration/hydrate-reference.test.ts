@@ -14,7 +14,7 @@ describe('Hydration', () => {
 		}
 
 		let {compare} = await hydrateCom(Test)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		compare()
 	})
 
@@ -32,7 +32,7 @@ describe('Hydration', () => {
 		}
 
 		let {compare} = await hydrateCom(Test)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		compare()
 	})
 
@@ -50,7 +50,7 @@ describe('Hydration', () => {
 		}
 
 		let {compare} = await hydrateCom(Test)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		compare()
 	})
 })

@@ -21,7 +21,7 @@ describe('Test rest slot', () => {
 
 		let parent = new Parent()
 		parent.appendTo(document.body)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(parent.el.querySelector('slot')?.textContent).toBe('Slot Content')
 	})
 })

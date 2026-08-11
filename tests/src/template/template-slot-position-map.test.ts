@@ -10,7 +10,7 @@ describe('Test SlotPositionMap', () => {
 	}
 
 	function createFakeTemplate() {
-		return new lupos.Template({el: document.createElement('template'), position: createFakePosition()})
+		return new lupos.Template({el: document.createElement('template'), position: createFakePosition()}, null, null)
 	}
 
 	it('SlotPositionMap', async () => {

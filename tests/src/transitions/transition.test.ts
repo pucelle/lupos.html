@@ -1,5 +1,5 @@
-import {PerFrameTransitionEasingName, WebTransitionEasingName, getEasingFunction, makeMixer} from '../../../web/out'
-import {describe, it, expect} from 'vitest'
+import {PerFrameTransitionEasingName, Transition, WebTransitionEasingName, getEasingFunction, makeMixer} from '../../../web/out'
+import {describe, it, expect, vi} from 'vitest'
 
 
 describe('Test transition', () => {
@@ -38,5 +38,31 @@ describe('Test transition', () => {
 		expect(makeMixer({a:0}, {a:1})(0.4)).toEqual({a:0.4})
 		expect(makeMixer([0,1], [1,0])(0.4)).toEqual([0.4, 0.6])
 		expect(makeMixer(new Mixable(0), new Mixable(1))(0.4)).toEqual(new Mixable(0.4))
+	})
+
+	it('updates reused transition properties and options', async () => {
+		let first = vi.fn()
+		let second = vi.fn()
+		let makeTransition = Transition.define((_el, options: {
+			duration: number
+			perFrame: (progress: number) => void
+		}) => options)
+		let transition = new Transition(document.createElement('div'))
+
+		await transition.enter(makeTransition({duration: 0, perFrame: first}))
+		await transition.enter(makeTransition({duration: 0, perFrame: second}))
+
+		expect(first).toHaveBeenCalled()
+		expect(second).toHaveBeenCalled()
+
+		let makeDefaultedTransition = Transition.define((_el, options: {
+			duration?: number
+			perFrame: (progress: number) => void
+		}) => options)
+		let pending = transition.enter(makeDefaultedTransition({perFrame: second}))
+		await new Promise(resolve => setTimeout(resolve, 0))
+		expect((transition as any).mixedTransitions[0].transition.options.duration).toBe(200)
+		transition.finish()
+		await pending
 	})
 })

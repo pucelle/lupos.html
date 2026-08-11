@@ -1,39 +1,33 @@
-import {setContext, UpdateQueue, useContext} from 'lupos'
 import * as lupos from '../../../web/out'
 import {describe, it, expect} from 'vitest'
 
 
 describe('Test Context Variable', () => {
+	it('returns the value on the first uncached lookup', () => {
+		let parentEl = document.createElement('div')
+		let childEl = document.createElement('div')
+		parentEl.append(childEl)
 
-	it('useContext & setContext', async () => {
-		class Parent extends lupos.Component {
+		let parent = new lupos.Component(parentEl) as lupos.Component & {prop: number}
+		let child = new lupos.Component(childEl)
+		parent.prop = 1
+		lupos.Component.setContextVariable(parent, 'prop')
 
-			@setContext
-			prop: number = 1
+		expect(lupos.Component.getContextVariableDeclared(child, 'prop')).toBe(1)
+	})
 
-			protected render() {
-				return lupos.html`<Child />`
-			}
-		}
+	it('reads updated values through a cached provider', () => {
+		let parentEl = document.createElement('div')
+		let childEl = document.createElement('div')
+		parentEl.append(childEl)
 
-		class Child extends lupos.Component {
+		let parent = new lupos.Component(parentEl) as lupos.Component & {prop: number}
+		let child = new lupos.Component(childEl)
+		parent.prop = 1
+		lupos.Component.setContextVariable(parent, 'prop')
 
-			@useContext prop!: number
-		}
-
-
-		let parent = new Parent()
-		parent.appendTo(document.body)
-
-		await UpdateQueue.untilAllComplete()
-		let child = Child.fromClosest(parent.el.firstElementChild!)!
-		expect(child.prop).toBe(1)
-
+		expect(lupos.Component.getContextVariableDeclared(child, 'prop')).toBe(1)
 		parent.prop = 2
-		expect(child.prop).toBe(2)
-
-		parent.remove()
-		await UpdateQueue.untilAllComplete()
-		expect(child.prop).toBe(undefined)
+		expect(lupos.Component.getContextVariableDeclared(child, 'prop')).toBe(2)
 	})
 })

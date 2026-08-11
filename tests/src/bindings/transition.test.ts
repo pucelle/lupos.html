@@ -6,7 +6,7 @@ import {describe, it, expect, vi} from 'vitest'
 describe('Test :transition', () => {
 
 	// Jest env has no web animation API.
-	const perFrameFade = lupos.Transition.define(function(el: HTMLElement, options: lupos.TransitionOptions = {}) {
+	const perFrameFade = lupos.Transition.define(function(el: HTMLElement, options: lupos.PerFrameTransitionOptions = {}) {
 		return {
 			...options,
 			perFrame: (progress: number) => {
@@ -24,7 +24,7 @@ describe('Test :transition', () => {
 		expect(Number(div.style.opacity)).toBeGreaterThan(0)
 		expect(Number(div.style.opacity)).toBeLessThan(1)
 
-		await sleep(150)
+		await sleep(200)
 		expect(Number(div.style.opacity)).toBe(1)
 	}
 
@@ -37,7 +37,7 @@ describe('Test :transition', () => {
 		expect(Number(div.style.opacity)).toBeGreaterThan(0)
 		expect(Number(div.style.opacity)).toBeLessThan(1)
 
-		await sleep(150)
+		await sleep(200)
 		expect(Number(div.style.opacity)).toBe(0)
 	}
 
@@ -55,19 +55,19 @@ describe('Test :transition', () => {
 			prop: boolean = false
 
 			protected render() {
-				return this.prop ? lupos.html`<div :transition.immediate=${perFrameFade()}>Transition</div>` : null
+				return this.prop ? lupos.html`<div :transition=${perFrameFade()}>Transition</div>` : null
 			}
 		}
 
 
 		let com = new Com()
 		com.appendTo(document.body)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(com.el.firstElementChild).toBe(null)
 
 
 		com.prop = true
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		let div = com.el.firstElementChild as HTMLElement
 		let fn2 = vi.fn()
@@ -104,7 +104,7 @@ describe('Test :transition', () => {
 				return this.prop
 					? lupos.html`
 						<div>
-							<div :ref=${this.div} :transition.immediate=${perFrameFade()}>Transition</div>
+							<div :ref=${this.div} :transition=${perFrameFade()}>Transition</div>
 						</div>
 					`
 					: null
@@ -113,7 +113,7 @@ describe('Test :transition', () => {
 
 		let com = new Com()
 		com.appendTo(document.body)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		let div = com.div
 
 		// No enter transition from 0 to 1
@@ -121,7 +121,7 @@ describe('Test :transition', () => {
 
 		// Leave transition started
 		com.prop = false
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		// No leave transition from 1 to 0
 		await expectNotPlayingTransition(div)
@@ -138,7 +138,7 @@ describe('Test :transition', () => {
 				return this.prop
 					? lupos.html`
 						<div>
-							<div :ref=${this.div} :transition.immediate.global=${perFrameFade()}>Transition</div>
+							<div :ref=${this.div} :transition.global=${perFrameFade()}>Transition</div>
 						</div>
 					`
 					: null
@@ -148,7 +148,7 @@ describe('Test :transition', () => {
 
 		let com = new Com()
 		com.appendTo(document.body)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		let div = com.div
 
@@ -157,7 +157,7 @@ describe('Test :transition', () => {
 
 		// Leave transition started
 		com.prop = false
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		// Leave transition from 1 to 0
 		await expectPlayingLeaveTransition(div)
@@ -178,7 +178,7 @@ describe('Test :transition', () => {
 		class Child extends lupos.Component {
 			protected render() {
 				return lupos.html`
-					<template :transition.immediate=${perFrameFade()}>Transition</template>
+					<template :transition=${perFrameFade()}>Transition</template>
 				`
 			}
 		}
@@ -186,11 +186,11 @@ describe('Test :transition', () => {
 
 		let com = new Com()
 		com.appendTo(document.body)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		// Show Child
 		com.prop = true
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		let div = com.child.el
 
 		// Enter transition from 0 to 1
@@ -198,7 +198,7 @@ describe('Test :transition', () => {
 
 		// Leave transition started
 		com.prop = false
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		// Leave transition from 1 to 0
 		await expectPlayingLeaveTransition(div)

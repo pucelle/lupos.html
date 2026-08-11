@@ -24,18 +24,18 @@ describe('SSR', () => {
 	it('ssr render', async () => {
 		let ssr = new SSR('/')
 		let rendered = (await ssr.render(html`<SSRTest>`))
-		expect(cleanHTML(rendered)).toBe('<div class="ssr-test">SSR</div>')
+		expect(cleanHTML(rendered)).toBe('<div class="ssr-test" com>SSR</div>')
 	})
 
 	it('ssr render component', async () => {
 		let ssr = new SSR('/')
 		let rendered = await ssr.renderComponent(SSRTest, 'ssr-test')
-		expect(cleanHTML(rendered)).toBe('<ssr-test ssr class="ssr-test">SSR</ssr-test>')
+		expect(cleanHTML(rendered)).toBe('<ssr-test ssr class="ssr-test" com>SSR</ssr-test>')
 	})
 
 	it('ssr render style', async () => {
 		let ssr = new SSR('/')
 		let rendered = await ssr.renderStyles()
-		expect(rendered).toBe('<style mode="static">.ssr-test{color:red;}</style>')
+		expect(rendered).toBe('.ssr-test{color: red;}')
 	})
 })

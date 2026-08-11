@@ -1,8 +1,8 @@
-import { defineConfig } from 'vitest/config'
-import path from 'node:path'
+const {defineConfig} = require('vitest/config')
+const path = require('node:path')
 
 
-export default defineConfig({
+module.exports = defineConfig({
 	test: {
 		environment: 'happy-dom',
 		include: ['tests/out/**/*.test.js'],

@@ -17,11 +17,11 @@ describe('Test Switch Block', () => {
 		let slot = new lupos.TemplateSlot<null>(new lupos.SlotPosition(lupos.SlotPositionType.AfterContent, container), null)
 
 		slot.update(render(1))
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(container.textContent).toEqual('1')
 
 		slot.update(render(2))
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(container.textContent).toEqual('')
 	})
 
@@ -40,15 +40,15 @@ describe('Test Switch Block', () => {
 		let slot = new lupos.TemplateSlot<null>(new lupos.SlotPosition(lupos.SlotPositionType.AfterContent, container), null)
 
 		slot.update(render(1))
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(container.textContent).toEqual('1')
 
 		slot.update(render(2))
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(container.textContent).toEqual('2')
 
 		slot.update(render(3))
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(container.textContent).toEqual('3')
 	})
 
@@ -67,17 +67,17 @@ describe('Test Switch Block', () => {
 		let slot = new lupos.TemplateSlot<null>(new lupos.SlotPosition(lupos.SlotPositionType.AfterContent, container), null)
 
 		slot.update(render(1))
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		let div = container.firstElementChild
 		expect(container.textContent).toEqual('1')
 
 		slot.update(render(2))
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(container.textContent).toEqual('2')
 		expect(container.firstElementChild === div).toEqual(false)
 
 		slot.update(render(1))
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(container.textContent).toEqual('1')
 		expect(container.firstElementChild).toEqual(div)
 	})

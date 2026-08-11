@@ -15,24 +15,25 @@ describe('Test For Block', () => {
 
 	let container = document.createElement('div')
 	let slot = new lupos.TemplateSlot(new lupos.SlotPosition(lupos.SlotPositionType.AfterContent, container), null)
+	slot.afterConnectCallback(lupos.PartCallbackParameterMask.AsDirectNode)
 
 
 	it('For Block', async () => {
 
 		slot.update(render([1]))
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(container.textContent).toEqual('1')
 
 		slot.update(render([1, 2]))
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(container.textContent).toEqual('12')
 
 		slot.update(render([2, 3]))
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(container.textContent).toEqual('23')
 
 		slot.update(render([]))
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(container.textContent).toEqual('')
 	})
 
@@ -43,7 +44,7 @@ describe('Test For Block', () => {
 			list.push(Math.floor(Math.random() * 10))
 
 			slot.update(render(list))
-			await UpdateQueue.untilAllComplete()
+			await UpdateQueue.untilComplete()
 			expect(container.textContent).toEqual(list.join(''))
 		}
 	})

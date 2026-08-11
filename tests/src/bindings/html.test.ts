@@ -15,5 +15,8 @@ describe('Test :html', () => {
 
 		b.update('<div onclick="alert(123)">123</div>')
 		expect(div.innerHTML).toEqual('<div>123</div>')
+
+		b.update('<img ONERROR=alert(123)><script type="module">alert(123)</script>')
+		expect(div.innerHTML).toEqual('<img>')
 	})
 })

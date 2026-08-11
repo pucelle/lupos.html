@@ -15,14 +15,14 @@ import {Binding} from './types'
 export class StyleBinding implements Binding {
 
 	protected readonly el: HTMLElement | SVGElement
-	protected lastStyleValues: Record<string, string> | null = null
+	protected lastStyleValues: Record<string, string | null | undefined> | null = null
 
 	/** Modifiers like `px`, `percent`, `url` was replaced by compiler. */
 	constructor(el: Element) {
 		this.el = el as HTMLElement | SVGElement
 	}
 
-	update(value: string | Record<string, string>) {
+	update(value: string | Record<string, string | null | undefined>) {
 		if (typeof value === 'string') {
 			this.updateString(value)
 		}
@@ -58,10 +58,10 @@ export class StyleBinding implements Binding {
 	 * - `:style.style-name=${booleanLike}`.
 	 * - `:style=${value}` and `value` is inferred as array type.
 	 */
-	updateObject(value: Record<string, string>) {
+	updateObject(value: Record<string, string | null | undefined>) {
 		if (this.lastStyleValues) {
 			for (let k of Object.keys(this.lastStyleValues)) {
-				if (!value.hasOwnProperty(k)) {
+				if (!Object.hasOwn(value, k)) {
 					this.el.style.removeProperty(k)
 				}
 			}
@@ -70,7 +70,12 @@ export class StyleBinding implements Binding {
 		// Also support hydration here.
 		for (let [k, v] of Object.entries(value)) {
 			if (!this.lastStyleValues || v !== this.lastStyleValues[k]) {
-				this.el.style.setProperty(k, v)
+				if (v === null || v === undefined) {
+					this.el.style.removeProperty(k)
+				}
+				else {
+					this.el.style.setProperty(k, v)
+				}
 			}
 		}
 

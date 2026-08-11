@@ -44,11 +44,13 @@ export class crossFadePair implements Binding, Part {
 
 	update(key: any) {
 		if (this.connected) {
-			if (this.key) {
+			if (this.key !== null) {
 				deleteCrossFadeElementForPairOnly(this.key, this.el)
 			}
 
-			setCrossFadeElementForPairOnly(key, this.el)
+			if (key !== null) {
+				setCrossFadeElementForPairOnly(key, this.el)
+			}
 		}
 
 		this.key = key

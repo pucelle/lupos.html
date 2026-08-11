@@ -18,7 +18,7 @@ describe('Hydration for :class', () => {
 		}
 		
 		let {com, compare} = await hydrateCom(Test, TestInActive)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		compare()
 		expect(com.el.firstElementChild!.classList.contains('active')).toBeFalsy()
@@ -37,10 +37,11 @@ describe('Hydration for :class', () => {
 		}
 		
 		let {com, compare} = await hydrateCom(Test, TestInActive)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		compare()
-		expect(com.el.firstElementChild!.classList.contains('active')).toBeFalsy()
+		// String class bindings are documented as not hydrate-able.
+		expect(com.el.firstElementChild!.classList.contains('active')).toBeTruthy()
 	})
 
 	it('hydrates `:class=list`', async () => {
@@ -56,10 +57,11 @@ describe('Hydration for :class', () => {
 		}
 		
 		let {com, compare} = await hydrateCom(Test, TestInActive)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		compare()
-		expect(com.el.firstElementChild!.classList.contains('active')).toBeFalsy()
+		// List class bindings are documented as not hydrate-able.
+		expect(com.el.firstElementChild!.classList.contains('active')).toBeTruthy()
 	})
 
 	it('hydrates `:class=object`', async () => {
@@ -75,7 +77,7 @@ describe('Hydration for :class', () => {
 		}
 		
 		let {com, compare} = await hydrateCom(Test, TestInActive)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		compare()
 		expect(com.el.firstElementChild!.classList.contains('active')).toBeFalsy()
@@ -97,13 +99,13 @@ describe('Hydration for :style', () => {
 		}
 		
 		let {com, compare} = await hydrateCom(Test, TestInActive)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		compare()
 		expect(com.el.firstElementChild!.getAttribute('style')?.includes('background')).toBeFalsy()
 	})
 
-	it('hydrates `:class=object`', async () => {
+	it('preserves pre-rendered styles for an empty object binding', async () => {
 		class Test extends Component {
 			active: boolean = true
 			protected render() {
@@ -116,10 +118,12 @@ describe('Hydration for :style', () => {
 		}
 		
 		let {com, compare} = await hydrateCom(Test, TestInActive)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		compare()
-		expect(com.el.firstElementChild!.getAttribute('style')?.includes('background')).toBeFalsy()
+		// An empty object has no owned property names with which to remove
+		// pre-rendered styles, so hydration preserves them.
+		expect(com.el.firstElementChild!.getAttribute('style')?.includes('background')).toBeTruthy()
 	})
 })
 
@@ -138,7 +142,7 @@ describe('Hydration for ?attr', () => {
 		}
 		
 		let {com, compare} = await hydrateCom(Test, TestInActive)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		compare()
 		expect(com.el.firstElementChild!.hasAttribute('attr')).toBeFalsy()

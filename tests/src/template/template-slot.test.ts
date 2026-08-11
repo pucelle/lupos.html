@@ -13,19 +13,19 @@ describe('Test TemplateSlot', () => {
 		let text = document.createTextNode('3')
 
 		slot.update(result)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(container.textContent).toBe('1')
 
 		slot.update([result, result])
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(container.textContent).toBe('11')
 
 		slot.update('2')
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(container.textContent).toBe('2')
 
 		slot.update(text)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(container.textContent).toBe('3')
 	})
 })

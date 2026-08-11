@@ -17,7 +17,7 @@ describe('Test :ref', () => {
 
 		let p = new Parent()
 		p.appendTo(document.body)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		expect(p.ref).toBeInstanceOf(Child)
 	})
@@ -36,16 +36,16 @@ describe('Test :ref', () => {
 
 		let c = new Com()
 		c.appendTo(document.body)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		expect(c.ref).toBeInstanceOf(HTMLElement)
 
 		c.prop = false
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(c.ref).toEqual(null)
 
 		c.prop = true
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(c.ref).toBeInstanceOf(HTMLElement)
 	})
 })

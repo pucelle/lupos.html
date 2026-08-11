@@ -20,14 +20,14 @@ describe('Hydration for <lu:if>', () => {
 		}
 
 		let {com, compare} = await hydrateCom(Test)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		compare()
 		expect(com.el.firstElementChild).toBe(null)
 
 		com.prop = true
 		com.text = 'text1'
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(com.el.firstElementChild?.textContent).toBe('text1')
 	})
 
@@ -47,13 +47,13 @@ describe('Hydration for <lu:if>', () => {
 
 		let {com, compare} = await hydrateCom(Test)
 		com.text = 'text1'
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		compare()
 		expect(com.el.firstElementChild?.textContent).toBe('text1')
 
 		com.prop = false
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(com.el.firstElementChild).toBe(null)
 	})
 
@@ -73,13 +73,13 @@ describe('Hydration for <lu:if>', () => {
 
 		let {com, compare} = await hydrateCom(Test)
 		com.text = 'text1'
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		compare()
 		expect(com.el.firstElementChild?.textContent).toBe('text1')
 
 		com.prop = false
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(com.el.firstElementChild).toBe(null)
 	})
 
@@ -101,13 +101,13 @@ describe('Hydration for <lu:if>', () => {
 		}
 
 		let {com, compare} = await hydrateCom(Test)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		compare()
 		expect(com.el.firstElementChild?.textContent).toBe('true')
 
 		com.prop = false
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(com.el.firstElementChild?.textContent).toBe('false')
 	})
 })
@@ -116,21 +116,18 @@ describe('Hydration for <lu:if>', () => {
 describe('Hydration for <lu:await>', () => {
 	it('Hydrate <lu:await>', async () => {
 		class Test extends Component {
-			promise: Promise<any> = Promise.resolve()
+			promise: Promise<any> = Promise.resolve(html`Then`)
 			render() {
 				return html`
 					<lu:await ${this.promise}>Pending</lu:await>
-					<lu:then>Then</lu:then>
-					<lu:catch>Catch</lu:catch>
 				`
 			}
 		}
 
 		let {com} = await hydrateCom(Test)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
-		// Can't correctly compare here because Pending text node will be replaced.
-		//compare()
+		// Pending text is replaced by the resolved content.
 		expect(com.el.textContent).toBe('Then')
 	})
 })
@@ -139,22 +136,18 @@ describe('Hydration for <lu:await>', () => {
 describe('Hydration for <lu:await>', () => {
 	it('Hydrate <lu:await>', async () => {
 		class Test extends Component {
-			promise: Promise<any> = Promise.resolve()
+			promise: Promise<any> = Promise.resolve(null)
 			render() {
 				return html`
 					<lu:await ${this.promise}>Pending</lu:await>
-					<lu:then>Then</lu:then>
-					<lu:catch>Catch</lu:catch>
 				`
 			}
 		}
 
 		let {com} = await hydrateCom(Test)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
-		// Can't correctly compare here because Pending text node will be replaced.
-		//compare()
-		expect(com.el.textContent).toBe('Then')
+		expect(com.el.textContent).toBe('')
 	})
 })
 
@@ -171,12 +164,12 @@ describe('Hydration for <lu:keyed>', () => {
 		}
 
 		let {com, compare} = await hydrateCom(Test)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		compare()
 		expect(com.el.textContent).toBe('text')
 
 		com.text = 'text1'
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(compare).toThrow('Node mismatch')
 		expect(com.el.textContent).toBe('text1')
 	})
@@ -200,17 +193,17 @@ describe('Hydration for <lu:switch>', () => {
 		}
 
 		let {com, compare} = await hydrateCom(Test)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		compare()
 		expect(com.el.textContent).toBe('1')
 
 		com.text = '2'
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(compare).toThrow('Node mismatch')
 		expect(com.el.textContent).toBe('2')
 
 		com.text = '3'
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(compare).toThrow('Node mismatch')
 		expect(com.el.textContent).toBe('3')
 	})
@@ -231,12 +224,12 @@ describe('Hydration for <lu:for>', () => {
 		}
 
 		let {com, compare} = await hydrateCom(Test)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		compare()
 		expect(com.el.textContent).toBe('12')
 
 		com.list = ['1', '2', '3']
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(com.el.textContent).toBe('123')
 	})
 })
@@ -258,7 +251,7 @@ describe('Hydration for <lu:portal>', () => {
 
 		let {com, compare} = await hydrateCom(Test)
 		com.text = 'text1'
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 
 		compare()
 		expect((com.el.firstElementChild! as HTMLTemplateElement).content.firstChild!.textContent).toBe('text1')
@@ -291,14 +284,14 @@ describe('Hydration for dynamic component', () => {
 		}
 
 		let {com: parent, compare} = await hydrateCom(Parent)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		compare()
 
 		expect(Child1.from(parent.el.firstElementChild!)!).toBeInstanceOf(Child1)
 		expect(parent.el.textContent).toBe('Child 1')
 
 		parent.ChildCom = Child2
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(Child2.from(parent.el.firstElementChild!)).toBeInstanceOf(Child2)
 		expect(parent.el.textContent).toBe('Child 2')
 	})
@@ -330,14 +323,14 @@ describe('Hydration for dynamic component', () => {
 		}
 
 		let {com: parent, compare} = await hydrateCom(Parent)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		compare()
 
 		expect(Child1.from(parent.el.firstElementChild!)!).toBeInstanceOf(Child1)
 		expect(parent.el.textContent).toBe('child component content')
 
 		parent.ChildCom = Child2
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(Child2.from(parent.el.firstElementChild!)).toBeInstanceOf(Child2)
 		expect(parent.el.textContent).toBe('child component content')
 	})

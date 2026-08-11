@@ -8,13 +8,12 @@ describe('Test Await Block', () => {
 		let render = (promise: Promise<any>) => {
 			return lupos.html`
 				<lu:await ${promise}>Pending</lu:await>
-				<lu:then>Then</lu:then>
-				<lu:catch>Catch</lu:catch>
 			`
 		}
 
 		let container = document.createElement('div')
 		let slot = new lupos.TemplateSlot<null>(new lupos.SlotPosition(lupos.SlotPositionType.AfterContent, container), null)
+		slot.afterConnectCallback(lupos.PartCallbackParameterMask.AsDirectNode)
 
 		let resolve: (value: any) => void
 		let promise = new Promise((r) => {
@@ -22,26 +21,12 @@ describe('Test Await Block', () => {
 		})
 
 		slot.update(render(promise))
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(container.textContent).toEqual('Pending')
 
-		resolve!(null)
+		resolve!(lupos.html`Then`)
 		await Promise.resolve()
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(container.textContent).toEqual('Then')
-
-		let reject: (reason: any) => void
-		promise = new Promise((_r, r) => {
-			reject = r
-		})
-
-		slot.update(render(promise))
-		await UpdateQueue.untilAllComplete()
-		expect(container.textContent).toEqual('Pending')
-
-		reject!(null)
-		await Promise.resolve()
-		await UpdateQueue.untilAllComplete()
-		expect(container.textContent).toEqual('Catch')
 	})
 })

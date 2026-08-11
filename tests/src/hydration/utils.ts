@@ -1,5 +1,5 @@
 import {UpdateQueue} from 'lupos'
-import {willHydrate} from '../../../web/out'
+import {willHydrateFrom} from '../../../web/out'
 
 
 type NodeCache = {node: Node, childNodes: NodeCache[]}
@@ -60,7 +60,7 @@ export async function hydrateCom<T extends {new(el?: HTMLElement, willHydrate?: 
 {
 	let com = new Com()
 	com.appendTo(document.body)
-	await UpdateQueue.untilAllComplete()
+	await UpdateQueue.untilComplete()
 	let outerHTML = com.el.outerHTML
 
 	com.remove()
@@ -71,7 +71,7 @@ export async function hydrateCom<T extends {new(el?: HTMLElement, willHydrate?: 
 	let el = template.content.firstElementChild as HTMLElement
 	let cloner = new NodesCloner(el)
 	let newCom = new HydrateBy(el)
-	willHydrate(el)
+	willHydrateFrom(el, el.firstChild)
 	await newCom.connectManually()
 
 	return {

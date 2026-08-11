@@ -9,7 +9,7 @@ describe('Test render', () => {
 		let rendered = lupos.render(lupos.html`<div>123</div>`)
 		rendered.appendTo(document.body)
 
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(rendered.el.innerHTML).toBe(`<div>123</div>`)
 	})
 
@@ -22,11 +22,11 @@ describe('Test render', () => {
 		})
 
 		rendered.appendTo(document.body)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(rendered.el.innerHTML).toBe(`<div>1</div>`)
 
 		o.value = 2
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		expect(rendered.el.innerHTML).toBe(`<div>2</div>`)
 	})
 })

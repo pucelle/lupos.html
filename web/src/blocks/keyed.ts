@@ -97,7 +97,7 @@ export class WeakCacheableKeyedBlock {
 
 	private key: object | undefined = undefined
 	private template: Template | null = null
-	private templates: WeakMap<object, Template | null> = new Map()
+	private templates: WeakMap<object, Template | null> = new WeakMap()
 	
 	constructor(slot: TemplateSlot) {
 		this.slot = slot

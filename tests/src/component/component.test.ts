@@ -4,6 +4,22 @@ import {describe, it, vi, expect} from 'vitest'
 
 
 describe('Test Component', () => {
+	it('hydrates from a non-first child node', () => {
+		class Test extends lupos.Component {
+			getHydrateNodes(fromNode: ChildNode) {
+				return this.initContentSlot(fromNode).takeHydrateNodes()
+			}
+		}
+
+		let el = document.createElement('div')
+		el.append('prefix', document.createElement('span'), 'suffix')
+		let com = new Test(el)
+
+		expect(Array.from(com.getHydrateNodes(el.childNodes[1])!)).toEqual([
+			el.childNodes[1],
+			el.childNodes[2],
+		])
+	})
 
 	it('Component Apis', async () => {
 		class Parent extends lupos.Component {
@@ -31,7 +47,7 @@ describe('Test Component', () => {
 		expect(parent.connected).toBe(false)
 
 		parent.appendTo(document.body)
-		await UpdateQueue.untilAllComplete()
+		await UpdateQueue.untilComplete()
 		let child = Child.fromClosest(parent.el.firstElementChild!)!
 
 		expect(fn1).toHaveBeenCalledTimes(1)
