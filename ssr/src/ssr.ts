@@ -217,7 +217,7 @@ export class SSR {
 		com.el.setAttribute('ssr', '')
 		let html = this.formatHTML(com.el.outerHTML)
 
-		com.remove(true)
+		com.remove()
 
 		return html
 	}
