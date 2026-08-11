@@ -21,6 +21,9 @@
 ## Examples
 
 ```ts
+import {Component, css, html} from 'lupos.html'
+
+
 export class Checkbox extends Component {
 
 	static style = css`
@@ -53,46 +56,46 @@ export class Checkbox extends Component {
 
 ## APIs
 
-- **Slot Contents within ${...}**:
-	- `html...`: as HTML content.
-	- `Array of html...`: as a list of HTML contents.
-	- `Text`: as a text content.
-	- `Node`: as a HTML node to move here.
-	- `Promise<AnyContentAbove>`: update content after resolved it. Note you should ensure the async content visits all trackable properties before any `await`, after which the properties visiting will never be tracked.
+- **Slot contents within `${...}`**:
+	- `` html`...` ``: HTML content.
+	- An array of `` html`...` `` results: a list of HTML contents.
+	- A primitive value: text content.
+	- `Node`: a DOM node to move into the slot.
+	- `Promise<AnyContentAbove>`: content that updates after the promise resolves. Access trackable properties before the first `await`; property access after it is not tracked.
 
 - **Bindings**:
 	- `:class`: bind element class names.
-	- `:crossFadePair` bind an element to provide bounding rect for later crossfade transition.
-	- `:html`: update `innerHTML` property of current element to codes.
-	- `:ref`: ref an element or a component as property, or as parameter to call a callback.
+	- `:crossFadePair`: provide an element's bounding rectangle for a later crossfade transition. Use `null` to remove the pair.
+	- `:html`: update an element's `innerHTML`; script elements and inline event attributes are removed.
+	- `:ref`: reference an element, component, or binding through a property or callback.
 	- `:style`: bind element style properties.
 	- `:transition`: bind enter and leave transition.
-	- `class newBinding implements Binding {...}`: to declare a new binding.
+	- `class NewBinding implements Binding {...}`: declare a custom binding.
 
-- **Blocks**
-	- **await**: await an async render result, update with it after it resolved, and will show default content before it get resolved.
+- **Blocks**:
+	- **await**: show default content until an asynchronous render result resolves.
 		```html
 		<lu:await ${AsyncContent}>DefaultContent</lu:await>
 		```
-		Note you should ensure the `AsyncContent` visits all trackable properties before any `await`, after which the properties visiting will never be tracked.
+		`AsyncContent` should resolve to any supported slot content. Access trackable properties before the first `await`.
 
 	- **DynamicComponent**: decide which component to render in runtime.
 		```html
 		<${DynamicComponent} />
 		```
-	- **for**: loop an iterable object.
+	- **for**: loop over an iterable object.
 		```html
 		<lu:for ${...}>${(item) => ...}</lu:for>
 		```
-	- **if**: control flow statements like which in javascript.
+	- **if**: conditionally render one branch.
 		```html
-		<lu:if ${...} ?cache>...</lu:if>
+		<lu:if ${...} cache>...</lu:if>
 		<lu:elseif>...</lu:elseif>
 		<lu:else>...</lu:else>
 		```
-	- **keyed**: will totally replace contents after keyed value changed.
+	- **keyed**: replace the contents when the key changes.
 		```html
-		<lu:keyed ${...} ?cache>...</lu:keyed>
+		<lu:keyed ${...} cache>...</lu:keyed>
 		```
 	- **cache**: can restore previously rendered contents and states.
 		```html
@@ -103,22 +106,22 @@ export class Checkbox extends Component {
 		<lu:switch ${...}>
 			<lu:case ${...}>...</lu:case>
 			<lu:default>...</lu:default>
-		</switch>
+		</lu:switch>
 		```
 
 - **Component**
 	- `Component`: base class of all components.
-	- `class NewComponent implements Component {...}`: to declare a new component.
+	- `class NewComponent extends Component {...}`: declare a new component.
 	- `defineCustomElement`: define a component as a custom element.
-	- `Fragmented`: accept a render function, will render things independently.
-	- `render`: render a html template literal to get a component like.
+	- `Fragmented`: render a function independently from its parent component.
+	- `render`: render content as a component-like object.
 
 - **Template**
 	- `` html`...` ``: html template literal to render html codes.
 	- `` css`...` ``: css template literal to render css codes.
 
-- **transition**
-	- **transitions**
+- **Transitions**:
+	- Built-in transitions:
 		- `blur`
 		- `crossfade`
 		- `draw`
@@ -136,9 +139,20 @@ export class Checkbox extends Component {
 
 ## SSR & Hydration
 
-Use `SSR` export from `lupos/ssr` to do server side rendering, work in node, bun and workers. You may need to import it firstly to simulate a browser like environment.
+Import `SSR` from `lupos.html/ssr` to perform server-side rendering in Node.js, Bun, or worker environments. Importing the module also installs the DOM globals required by the renderer.
 
-You should render a entry component by `ssr.renderComponent`, and render css styles by `ssr.renderStyles`, and then interpolate them into the final HTML codes.
+Render an entry component with `ssr.renderComponent()` and its CSS with `ssr.renderStyles()`, then interpolate both results into the final HTML document. `renderStyles()` returns CSS text by default; pass `true` to include the `<style>` element.
+
+```ts
+import {SSR} from 'lupos.html/ssr'
+
+
+const ssr = new SSR('/products')
+const content = await ssr.renderComponent(App, 'app-root')
+const styles = ssr.renderStyles(true)
+```
+
+During hydration, object-form `:class` bindings and property-form style bindings can reconcile pre-rendered values. String and list forms of `:class` are not hydrate-able. An empty object passed to `:style` preserves pre-rendered inline styles because it contains no owned property names to remove.
 
 You should also add following codes to your `webpack.config.js` to exclude outputting style (which SSR had rendered), and eliminate useless SSR codes.
 
@@ -165,13 +179,25 @@ module: {
 }
 ```
 
-Note you may need to set `"moduleResolution": "Bundler"` in `tsconfig.json` to import `lupos/ssr`.
+You may need to set `"moduleResolution": "Bundler"` in `tsconfig.json` to import `lupos.html/ssr`.
+
+
+
+## Development
+
+Build the web and SSR packages, compile the tests, and run the full test suite:
+
+```bash
+npm run build
+npm run build-test
+npm test -- --run
+```
 
 
 
 ## Production
 
-You should config your bundle tool to eliminate function call `debug_components`.
+You should config your bundle tool to eliminate `IN_SSR` by replacing it to `false`.
 
 
 
