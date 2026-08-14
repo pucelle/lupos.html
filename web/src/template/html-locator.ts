@@ -195,13 +195,30 @@ export class HydrateHTMLLocator {
 		let restSlotMarker = this.walkAndFindMarker(hNode, restSlotMarkerId)
 
 		if (restSlotMarker) {
-			let hNodes = restSlotMarker.parentElement!.childNodes
-			let endIndex = this.patchNodesRecursively(tNode.childNodes, hNodes, depth + 1, true)
-			let fromNode = endIndex >= hNodes.length ? null : hNodes[endIndex]
+			let restSlotParent = restSlotMarker.parentElement!
 
-			// Nodes from the index are the nodes rendered by sub component itself.
-			// But may insert more nodes before when parent updating.
-			willHydrateFrom(hNode, fromNode)
+
+			// Have `<slot />` exists in component,
+			// rest nodes get inserted into it.
+			if (restSlotParent.localName === 'slot') {
+				let hNodes = restSlotParent.childNodes
+				this.patchNodesRecursively(tNode.childNodes, hNodes, depth + 1, true)
+
+				// Hydrate from first child of component.
+				willHydrateFrom(hNode, hNode.firstChild)
+			}
+
+			// `<slot />` is not exist in component,
+			// rest nodes get inserted into start position of component.
+			else {
+				let hNodes = restSlotParent.childNodes
+				let endIndex = this.patchNodesRecursively(tNode.childNodes, hNodes, depth + 1, true)
+				let fromNode = endIndex >= hNodes.length ? null : hNodes[endIndex]
+
+				// Nodes from the index are the nodes rendered by sub component itself.
+				// But may insert more nodes before when parent updating.
+				willHydrateFrom(hNode, fromNode)
+			}
 		}
 
 		// We make a new empty template to cache cloned nodes,
