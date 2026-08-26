@@ -79,7 +79,6 @@ export class HydrateHTMLLocator {
 	): number {
 		let hIndex = 0
 		let latestHNode = hydrateNodes[0]
-		let toCleanHNodes: ChildNode[] = []
 
 		for (let tIndex = 0; tIndex < templateNodes.length; tIndex++) {
 			let tNode = templateNodes[tIndex]
@@ -137,10 +136,6 @@ export class HydrateHTMLLocator {
 				if (hNodeMismatch) {
 					let markerIndex = this.findMarker(markerId, hIndex, hydrateNodes)
 					if (markerIndex !== -1) {
-						for (let i = hIndex; i < markerIndex; i++) {
-							toCleanHNodes.push(hydrateNodes[i])
-						}
-
 						hIndex = markerIndex
 						hNode = hydrateNodes[markerIndex]
 						hNodeMismatch = false
@@ -187,13 +182,6 @@ export class HydrateHTMLLocator {
 			&& !canCleanRestTNodes
 		) {
 			this.cleanHydrateNodes(templateNodes, hydrateNodes, hIndex)
-		}
-
-		// Clean those have no tNode mapped h nodes.
-		if (toCleanHNodes.length > 0) {
-			for (let node of toCleanHNodes) {
-				node.remove()
-			}
 		}
 
 		return hIndex
