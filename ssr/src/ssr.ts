@@ -1,6 +1,6 @@
 import {UpdateQueue} from 'lupos'
 import * as linkedom from 'linkedom'
-import {Component, connectCustomElement, flushStyles, render, RenderResult, reset_IN_SSR, resetOnPageInit, waitHydrationGates} from '../../web/out'
+import {Component, connectCustomElement, flushStyles, needsFlushStyles, render, RenderResult, reset_IN_SSR, resetOnPageInit, waitHydrationGates} from '../../web/out'
 
 
 // Cache page init callbacks.
@@ -126,6 +126,11 @@ export class SSR {
 		globalThis.location = new URL(domain) as any
 	}
 
+	/** Check whether need to flush styles. */
+	static get needsFlushStyles() {
+		return needsFlushStyles
+	}
+
 
 	readonly uri: string
 	readonly window: Window
@@ -245,7 +250,7 @@ export class SSR {
 	renderStyles(includeStyleTag: boolean = false): string {
 		
 		// Flush styles after context initialized.
-		if (!this.styleFlushed) {
+		if (!this.styleFlushed || needsFlushStyles) {
 			flushStyles()
 			this.styleFlushed = true
 		}

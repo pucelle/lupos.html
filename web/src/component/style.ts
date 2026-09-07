@@ -13,22 +13,39 @@ interface NamedStyle {
 }
 
 
+/** For global style name seeding. */
+let globalNameSeed: number = 1
+
+/** 
+ * Whether changed styles and need to flush but not yet.
+ * Only for SSR env.
+ */
+export let needsFlushStyles: boolean = false
+
+
 /** Class to insert style tags. */
 class ToUpdateStyle implements Updatable {
 
 	readonly iid: number = 0
-	private styles: NamedStyle[] = []
+	private styles: Map<string, NamedStyle> = new Map()
 
-	/** Add a component style. */
+	/** 
+	 * Add a component style.
+	 * Note the style content will replace original via name.
+	 */
 	add(name: string, style: TemplateStyle) {
-		this.styles.push({
+		this.styles.set(name, {
 			name,
 			type: typeof style === 'function' ? 'dynamic' : 'static',
 			code: style
 		})
 
-		// When SSR, not enqueue.
-		if (this.styles.length === 1 && !IN_SSR) {
+		// Only when not in SSR, will enqueue.
+		// And only need to enqueue for once.
+		if (IN_SSR) {
+			needsFlushStyles = true
+		}
+		else if (this.styles.size === 1) {
 			this.willUpdate()
 		}
 	}
@@ -50,7 +67,7 @@ class ToUpdateStyle implements Updatable {
 		let group: NamedStyle[] = []
 		let latestStringGroup: NamedStyle | null = null
 
-		for (let style of this.styles) {
+		for (let style of this.styles.values()) {
 			if (style.type === 'dynamic') {
 				group.push(style)
 			}
@@ -107,7 +124,7 @@ let toUpdateStyle: ToUpdateStyle | null = null
  * It will be compiled to accept component declared style,
  * and returns the style as original static property.
  */
-export function addComponentStyle(style: TemplateStyle, identifyName: string = 'global'): TemplateStyle {
+export function addComponentStyle(style: TemplateStyle, identifyName: string): TemplateStyle {
 	if (!toUpdateStyle) {
 		toUpdateStyle = new ToUpdateStyle()
 	}
@@ -117,13 +134,16 @@ export function addComponentStyle(style: TemplateStyle, identifyName: string = '
 }
 
 
-/** Add a template style to document head as a style tag. */
-export function addStyle(style: TemplateStyle) {
+/** 
+ * Add a template style to document head as a style tag.
+ * If you want new to replace old, specifies a static name.
+ */
+export function addStyle(style: TemplateStyle, name = 'global-' + globalNameSeed++) {
 	if (!toUpdateStyle) {
 		toUpdateStyle = new ToUpdateStyle()
 	}
 
-	toUpdateStyle.add('anonymous', style)
+	toUpdateStyle.add(name, style)
 }
 
 
@@ -135,5 +155,6 @@ export function addStyle(style: TemplateStyle) {
 export function flushStyles() {
 	if (toUpdateStyle) {
 		toUpdateStyle.update()
+		needsFlushStyles = false
 	}
 }
