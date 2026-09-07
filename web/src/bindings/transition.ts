@@ -43,16 +43,16 @@ export type TransitionPhase = 'enter' | 'leave' | 'both' | 'none'
  * - `transition-leave-started`: After leave transition started.
  * - `transition-leave-ended`: After leave transition ended.
  */
-export class TransitionBinding implements Binding, Part {
+export class TransitionBinding<E extends Element = Element> implements Binding, Part {
 
-	protected readonly el: Element
+	protected readonly el: E
 	protected connectedState: PartConnectedState = PartConnectedState.Disconnected
-	protected result: TransitionResult | null | (() => TransitionResult | null) = null
+	protected result: TransitionResult<E> | null | (() => TransitionResult<E> | null) = null
 	protected phase: TransitionPhase = 'both'
 	protected global: boolean = false
 	protected transition: Transition
 
-	constructor(el: Element, _context: any, modifiers: ('global' | 'enter' | 'leave')[] | null = null) {
+	constructor(el: E, _context: any, modifiers: ('global' | 'enter' | 'leave')[] | null = null) {
 		this.el = el
 
 		if (modifiers) {
@@ -160,7 +160,7 @@ export class TransitionBinding implements Binding, Part {
 		return false
 	}
 
-	update(result: TransitionResult | null | (() => TransitionResult | null), options?: TransitionOptions) {
+	update(result: TransitionResult<E> | null | (() => TransitionResult<E> | null), options?: TransitionOptions) {
 		this.result = result
 
 		// Cancel transition immediately if transition value becomes `null`.
@@ -191,7 +191,7 @@ export class TransitionBinding implements Binding, Part {
 			return
 		}
 
-		return this.transition.enter(result)
+		return this.transition.enter(result as TransitionResult<Element, any>)
 	}
 
 	private getResult() {
@@ -209,6 +209,6 @@ export class TransitionBinding implements Binding, Part {
 			return
 		}
 
-		return this.transition.leave(result)
+		return this.transition.leave(result as TransitionResult<Element, any>)
 	}
 }
