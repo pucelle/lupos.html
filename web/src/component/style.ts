@@ -37,7 +37,7 @@ class ToUpdateStyle implements Updatable {
 		this.styles.set(name, {
 			name,
 			type: typeof style === 'function' ? 'dynamic' : 'static',
-			code: style
+			code: `/* ${name} */\n` + style
 		})
 
 		// Only when not in SSR, will enqueue.
@@ -67,6 +67,8 @@ class ToUpdateStyle implements Updatable {
 		let group: NamedStyle[] = []
 		let latestStringGroup: NamedStyle | null = null
 
+		console.log([...this.styles.keys()])
+
 		for (let style of this.styles.values()) {
 			if (style.type === 'dynamic') {
 				group.push(style)
@@ -83,7 +85,7 @@ class ToUpdateStyle implements Updatable {
 				}
 				else {
 					latestStringGroup.name += ', ' + style.name
-					latestStringGroup.code += String(style.code)
+					latestStringGroup.code += '\n\n' + String(style.code)
 				}
 			}
 		}
