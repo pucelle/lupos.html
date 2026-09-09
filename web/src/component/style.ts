@@ -67,8 +67,6 @@ class ToUpdateStyle implements Updatable {
 		let group: NamedStyle[] = []
 		let latestStringGroup: NamedStyle | null = null
 
-		console.log([...this.styles.keys()])
-
 		for (let style of this.styles.values()) {
 			if (style.type === 'dynamic') {
 				group.push(style)
