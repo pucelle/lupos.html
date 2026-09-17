@@ -1,4 +1,4 @@
-import {ContextVariableConstructor, EventFirer, Observed, UpdateQueue, beginTrack, endTrack, Updatable, promisify, UnObserved, untrack, trackGet, trackSet, IN_DEV} from 'lupos'
+import {ContextVariableConstructor, EventFirer, Observed, UpdateQueue, beginTrack, endTrack, Updatable, promisify, untrack, trackGet, trackSet, IN_DEV} from 'lupos'
 import {TemplateStyle} from './style'
 import {addElementComponentMap, deleteElementComponentMap, completeHydration, getComponentByElement, needsHydrateFrom} from './from-element'
 import {TemplateSlot, SlotPosition, SlotPositionType, CompiledTemplateResult, SlotContentType} from '../template'
@@ -439,7 +439,14 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	 * 
 	 * Fired for only once.
 	 */
-	protected onCreated() {}
+	protected onCreated() {
+
+		// For localhost debugging.
+		if (IN_DEV) {
+			this.el.setAttribute('com', this.constructor.name)
+			this.el.setAttribute('iid', String(this.iid))
+		}
+	}
 
 	/** 
 	 * After every time the component get updated.
@@ -729,18 +736,3 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	}
 }
 
-
-/** 
- * For localhost debugging.
- * `debug_xxx` functions should be eliminated in production mode.
- */
-if (IN_DEV) {
-	let original = (Component as UnObserved).prototype.onCreated;
-	
-	(Component as UnObserved).prototype.onCreated = function() {
-		original.call(this)
-
-		this.el.setAttribute('com', this.constructor.name)
-		this.el.setAttribute('iid', this.iid)
-	}
-}
