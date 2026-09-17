@@ -1,4 +1,4 @@
-import {ContextVariableConstructor, EventFirer, Observed, UpdateQueue, beginTrack, endTrack, Updatable, promisify, UnObserved, untrack} from 'lupos'
+import {ContextVariableConstructor, EventFirer, Observed, UpdateQueue, beginTrack, endTrack, Updatable, promisify, UnObserved, untrack, trackGet, trackSet} from 'lupos'
 import {TemplateStyle} from './style'
 import {addElementComponentMap, deleteElementComponentMap, completeHydration, getComponentByElement, needsHydrateFrom} from './from-element'
 import {TemplateSlot, SlotPosition, SlotPositionType, CompiledTemplateResult, SlotContentType} from '../template'
@@ -204,6 +204,7 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	/** 
 	 * Whether current component was connected into document.
 	 * Readonly outside of component.
+	 * Note this property is not observable.
 	 */
 	get connected(): boolean {
 		return (this.$stateMask & ComponentStateMask.Connected) > 0
@@ -212,6 +213,7 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	/** 
 	 * Whether current component exit connected state,
 	 * but are still waiting transition playing to fully disconnected.
+	 * Note this property is not observable.
 	 */
 	get disconnecting(): boolean {
 		return (this.$stateMask & ComponentStateMask.Disconnecting) > 0
@@ -222,6 +224,7 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 	 * Always returns `false` after connected.
 	 */
 	get needsHydrate(): boolean {
+		trackGet(this, 'needsHydrate')
 		return needsHydrateFrom(this.el) !== undefined
 	}
 
@@ -251,7 +254,7 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 
 		// Call connect callback if not yet.
 		let contentSlotParam = getComponentSlotParameter(param, this.el.localName === 'slot')
-		this.$stateMask |= contentSlotParam << 6
+		this.$stateMask |= contentSlotParam << 7
 
 		// Earlier than `onConnected` because may calls `untilUpdated()` there.
 		this.willUpdate()
@@ -341,8 +344,8 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 			this.$stateMask &= ~ComponentStateMask.WillCallConnectCallback
 
 			// Separate slot param from state mask.
-			let contentSlotParam = this.$stateMask >> 6
-			this.$stateMask &= 0x3F
+			let contentSlotParam = this.$stateMask >> 7
+			this.$stateMask &= 0x7F
 
 			this.$contentSlot.afterConnectCallback(contentSlotParam)
 		}
@@ -355,6 +358,7 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 		if ((this.$stateMask & ComponentStateMask.NeedsCompleteHydrate) > 0) {
 			this.$stateMask &= ~ComponentStateMask.NeedsCompleteHydrate
 			completeHydration(this.el)
+			trackSet(this, 'needsHydrate')
 		}
 
 		
