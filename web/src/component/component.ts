@@ -384,9 +384,9 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 			result = null
 			meetsError = true
 
-			// Print current path when doing SSR.
+			// Print current url when doing SSR.
 			if (IN_SSR) {
-				console.log(location.pathname)
+				console.log(location.href)
 			}
 
 			console.warn(err)
