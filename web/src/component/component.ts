@@ -180,7 +180,7 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 
 	/** 
 	 * State of current component, byte mask type.
-	 * It's higher bits will be used to cache connect parameter after moving left.
+	 * It's higher bits from 7 will be used to cache connect parameter after moving left.
 	 */
 	protected $stateMask: ComponentStateMask | 0 = 0
 
