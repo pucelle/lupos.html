@@ -49,6 +49,7 @@ const enum ComponentStateMask {
 	Connected = 1 << 3,
 	Disconnecting = 1 << 4,
 	WillCallConnectCallback = 1 << 5,
+	NeedsCompleteHydrate = 1 << 6,
 }
 
 
@@ -236,6 +237,10 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 			hydrationChildFrom = needsHydrateFrom(this.el)
 			this.$contentSlot = this.initContentSlot(hydrationChildFrom)
 			this.onCreated()
+
+			if (hydrationChildFrom) {
+				this.$stateMask |= ComponentStateMask.NeedsCompleteHydrate
+			}
 		}
 		else {
 			addElementComponentMap(this.el, this)
@@ -254,10 +259,6 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 		// After binding `updated` because may bind more `updated` events in `onConnected`.
 		this.onConnected()
 		this.fire('connected')
-
-		if (hydrationChildFrom !== undefined) {
-			completeHydration(this.el)
-		}
 	}
 
 	beforeDisconnectCallback(this: Component<{}>, param: PartCallbackParameterMask | 0): Promise<void> | void {
@@ -350,6 +351,13 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 		this.fire('updated')
 
 		
+		// Complete the hydration.
+		if ((this.$stateMask & ComponentStateMask.NeedsCompleteHydrate) > 0) {
+			this.$stateMask &= ~ComponentStateMask.NeedsCompleteHydrate
+			completeHydration(this.el)
+		}
+
+		
 		// Call ready if not yet.
 		if ((this.$stateMask & ComponentStateMask.ReadyAlready) === 0) {
 			this.$stateMask |= ComponentStateMask.ReadyAlready
@@ -396,7 +404,8 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 		// Note here `hydrateNodes` should have at least one element if provided.
 		let hydrateNodes: ArrayLike<ChildNode> | undefined
 
-		if (hydrateFromChild) {
+		// If having html attr, means will later setting whole html content, so no need to do hydrating.
+		if (hydrateFromChild && !this.el.hasAttribute('html')) {
 			let fromIndex = Array.prototype.indexOf.call(this.el.childNodes, hydrateFromChild)
 
 			if (fromIndex <= 0) {

@@ -75,7 +75,7 @@ export class HydrateHTMLLocator {
 		templateNodes: ArrayLike<ChildNode>,
 		hydrateNodes: ArrayLike<ChildNode>,
 		depth: number,
-		canCleanRestTNodes: boolean
+		canClearRestTNodes: boolean
 	): number {
 		let hIndex = 0
 		let latestHNode = hydrateNodes[0]
@@ -179,9 +179,9 @@ export class HydrateHTMLLocator {
 		// Will not remove rest nodes because they may be de newly made contents
 		// inside <Sub>, so we leave them to be handled by <Sub> component.
 		if (hIndex < hydrateNodes.length
-			&& !canCleanRestTNodes
+			&& !canClearRestTNodes
 		) {
-			this.cleanHydrateNodes(templateNodes, hydrateNodes, hIndex)
+			this.clearHydrateNodes(templateNodes, hydrateNodes, hIndex)
 		}
 
 		return hIndex
@@ -271,12 +271,12 @@ export class HydrateHTMLLocator {
 		}
 	}
 
-	/** Clean hydration nodes that have no template nodes match. */
-	private cleanHydrateNodes(templateNodes: ArrayLike<ChildNode>, hydrateNodes: ArrayLike<ChildNode>, hIndex: number) {
+	/** Clear hydration nodes that have no template nodes match. */
+	private clearHydrateNodes(templateNodes: ArrayLike<ChildNode>, hydrateNodes: ArrayLike<ChildNode>, hIndex: number) {
 		
 		// Like `<Row><Col /></Row>`, row template not specify `<slot>`,
 		// so `<Col />` becomes silent rest slot contents.
-		let cleanFromIndex = hydrateNodes.length - 1
+		let clearFromIndex = hydrateNodes.length - 1
 
 		if (templateNodes.length === 0) {
 			let containerCom = getComponentByElement(hydrateNodes[0].parentElement!)
@@ -285,7 +285,7 @@ export class HydrateHTMLLocator {
 				if (restSlotStartNode) {
 					for (let i = hydrateNodes.length - 1; i >= hIndex; i--) {
 						if (hydrateNodes[i] === restSlotStartNode) {
-							cleanFromIndex = i - 1
+							clearFromIndex = i - 1
 							break
 						}
 					}
@@ -293,8 +293,8 @@ export class HydrateHTMLLocator {
 			}
 		}
 
-		if (cleanFromIndex >= hIndex) {
-			for (let i = cleanFromIndex; i >= hIndex; i--) {
+		if (clearFromIndex >= hIndex) {
+			for (let i = clearFromIndex; i >= hIndex; i--) {
 				hydrateNodes[i].remove()
 			}
 		}
