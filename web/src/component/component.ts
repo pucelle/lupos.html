@@ -1,4 +1,4 @@
-import {ContextVariableConstructor, EventFirer, Observed, UpdateQueue, beginTrack, endTrack, Updatable, promisify, UnObserved, untrack, trackGet, trackSet} from 'lupos'
+import {ContextVariableConstructor, EventFirer, Observed, UpdateQueue, beginTrack, endTrack, Updatable, promisify, UnObserved, untrack, trackGet, trackSet, IN_DEV} from 'lupos'
 import {TemplateStyle} from './style'
 import {addElementComponentMap, deleteElementComponentMap, completeHydration, getComponentByElement, needsHydrateFrom} from './from-element'
 import {TemplateSlot, SlotPosition, SlotPositionType, CompiledTemplateResult, SlotContentType} from '../template'
@@ -7,6 +7,7 @@ import {getComponentSlotParameter, Part, PartCallbackParameterMask} from '../par
 import {SlotRange} from '../template/slot-range'
 import {deleteContextVariables, getContextVariableDeclared, setContextVariable} from './context-variable'
 import {getIncrementalId} from '../iid'
+import {IN_SSR} from '../ssr'
 
 
 export interface ComponentEvents {
@@ -382,6 +383,12 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 		catch (err) {
 			result = null
 			meetsError = true
+
+			// Print current path when doing SSR.
+			if (IN_SSR) {
+				console.log(location.pathname)
+			}
+
 			console.warn(err)
 		}
 
@@ -727,7 +734,7 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
  * For localhost debugging.
  * `debug_xxx` functions should be eliminated in production mode.
  */
-(function debug_components() {
+if (IN_DEV) {
 	let original = (Component as UnObserved).prototype.onCreated;
 	
 	(Component as UnObserved).prototype.onCreated = function() {
@@ -736,4 +743,4 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 		this.el.setAttribute('com', this.constructor.name)
 		this.el.setAttribute('iid', this.iid)
 	}
-})()
+}
