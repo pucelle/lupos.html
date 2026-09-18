@@ -1,6 +1,6 @@
-import {IN_DEV, UpdateQueue} from 'lupos'
+import {UpdateQueue} from 'lupos'
 import * as linkedom from 'linkedom'
-import {Component, connectCustomElement, flushStyles, needsFlushStyles, render, RenderResult, reset_IN_SSR, resetOnPageInit, waitHydrationGates} from '../../web/out'
+import {Component, connectCustomElement, flushStyles, needsFlushStyles, render, RenderResult, reset_IN_SSR, reset_IN_SSR_PROD, resetOnPageInit, waitHydrationGates} from '../../web/out'
 
 
 // Cache page init callbacks.
@@ -131,14 +131,6 @@ export class SSR {
 		return needsFlushStyles
 	}
 
-	/** 
-	 * Whether in development mode from parsing current location url.
-	 * The global `IN_DEV` indicates whether in DEV mode globally,
-	 * while this property indicates whether are rendering SSR pages.
-	 * Note this value may be reset unexpectedly when previewing and also SSR.
-	 */
-	static in_dev: boolean = IN_DEV
-
 
 	readonly uri: string
 	readonly window: Window
@@ -151,12 +143,7 @@ export class SSR {
 		this.window = this.initWindow()
 		this.document = this.window.document
 
-		if (new URL(location.href).searchParams.get('mode') === 'production') {
-			SSR.in_dev = false
-		}
-		else {
-			SSR.in_dev = IN_DEV
-		}
+		reset_IN_SSR_PROD(new URL(location.href).searchParams.get('mode') === 'production')
 	}
 
 	private initWindow(): Window {
