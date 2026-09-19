@@ -1,3 +1,4 @@
+import {UpdateQueue} from 'lupos'
 import {RenderResult} from '../component'
 import {PartConnectedState} from '../part'
 import {CompiledTemplateResult, TemplateMaker, TemplateSlot} from '../template'
@@ -25,6 +26,7 @@ export class AwaitBlock {
 	readonly context: any
 
 	private promise: Promise<any> | null = null
+	private version: number = 0
 
 	constructor(maker: TemplateMaker | null, slot: TemplateSlot, context: any) {
 		this.maker = maker
@@ -41,9 +43,23 @@ export class AwaitBlock {
 			return
 		}
 
-		this.updateDefault(values)
-		
+		let version = ++this.version
+
+		UpdateQueue.waitSeveralTicks().then(() => {
+			if (version !== this.version) {
+				return
+			}
+
+			this.updateDefault(values)
+		})
+
 		promise.then((result: RenderResult) => {
+			if (version !== this.version) {
+				return
+			}
+
+			this.version++
+
 			if (promise === this.promise && this.slot.connectedState === PartConnectedState.Connected) {
 				this.updatePromised(result)
 			}
