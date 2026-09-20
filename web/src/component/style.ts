@@ -56,10 +56,12 @@ class ToUpdateStyle implements Updatable {
 
 	update() {
 		let group = this.groupStyles()
-		let scriptTag = document.head.querySelector('script')
+
+		let staticStyleTag = document.querySelector('style[lupos]')
+		let beforeTag = staticStyleTag?.nextElementSibling ?? document.head.querySelector('script')
 
 		for (let style of group) {
-			this.createStyleElement(style.type, style.code, scriptTag)
+			this.createStyleTag(style.type, style.code, beforeTag, staticStyleTag)
 		}
 	}
 
@@ -97,9 +99,15 @@ class ToUpdateStyle implements Updatable {
 	 * Always insert it into before any script tags.
 	 * So you may put overwritten styles after script tag to avoid conflict.
 	 */
-	private createStyleElement(type: 'static' | 'dynamic', code: TemplateStyle | string, scriptTag: HTMLElement | null) {
-		let styleTag = document.createElement('style')
-		styleTag.setAttribute(type, '')
+	private createStyleTag(
+		type: 'static' | 'dynamic',
+		code: TemplateStyle | string,
+		scriptTag: Element | null,
+		staticStyleTag: Element | null
+	) {
+		let useExisting = type === 'static' && staticStyleTag
+		let styleTag = useExisting ? staticStyleTag! : document.createElement('style')
+		styleTag.setAttribute('lupos', '')
 
 		if (typeof code === 'function') {
 			new Effector(() => {
@@ -110,7 +118,9 @@ class ToUpdateStyle implements Updatable {
 			styleTag.textContent = code as string
 		}
 		
-		document.head.insertBefore(styleTag, scriptTag)
+		if (!useExisting) {
+			document.head.insertBefore(styleTag, scriptTag)
+		}
 	}
 }
 

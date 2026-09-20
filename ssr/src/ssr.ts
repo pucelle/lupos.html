@@ -257,12 +257,12 @@ export class SSR {
 			this.styleFlushed = true
 		}
 
-		let style = this.document.head.querySelector('style[static]')
+		let style = this.document.head.querySelector('style[lupos]')
 		if (!style) {
 			return ''
 		}
 
-		style.removeAttribute('static')
+		style.removeAttribute('lupos')
 
 		return this.formatHTML(includeStyleTag ? style.outerHTML : style.textContent)
 	}
