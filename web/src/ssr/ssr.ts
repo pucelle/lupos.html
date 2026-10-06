@@ -34,3 +34,17 @@ export let onPageInit = function(callback: () => void) {
 export function resetOnPageInit(init: (callback: () => void) => void) {
 	onPageInit = init
 }
+
+
+interface SSRPaging {
+	current: number
+	total: number
+}
+
+/** Set paging index for SSR env. */
+export let SSRPaging: SSRPaging | null = null
+
+/** Set paging index for SSR env. */
+export function setSSRPaging(paging: SSRPaging | null) {
+	SSRPaging = paging
+}

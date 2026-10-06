@@ -1,6 +1,6 @@
 import {UpdateQueue} from 'lupos'
 import * as linkedom from 'linkedom'
-import {Component, connectCustomElement, flushStyles, needsFlushStyles, render, RenderResult, reset_IN_SSR, reset_IN_SSR_PROD, resetOnPageInit, waitHydrationGates} from '../../web/out'
+import {Component, connectCustomElement, flushStyles, needsFlushStyles, render, RenderResult, reset_IN_SSR, reset_IN_SSR_PROD, resetOnPageInit, setSSRPaging, waitHydrationGates} from '../../web/out'
 
 
 // Cache page init callbacks.
@@ -143,7 +143,11 @@ export class SSR {
 		this.window = this.initWindow()
 		this.document = this.window.document
 
+		// Reset env variable.
 		reset_IN_SSR_PROD(new URL(location.href).searchParams.get('mode') === 'production')
+		
+		// Clear ssr paging settings.
+		setSSRPaging(null)
 	}
 
 	private initWindow(): Window {
