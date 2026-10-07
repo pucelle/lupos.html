@@ -1,6 +1,6 @@
 import {UpdateQueue} from 'lupos'
 import * as linkedom from 'linkedom'
-import {Component, connectCustomElement, flushStyles, needsFlushStyles, render, RenderResult, reset_IN_SSR, reset_IN_SSR_PROD, resetOnPageInit, setSSRPaging, waitHydrationGates} from '../../web/out'
+import {Component, connectCustomElement, flushStyles, needsFlushStyles, render, RenderResult, reset_IN_SSR, reset_IN_SSR_PROD, resetOnPageInit, setSSRPaging, SSRPaging, waitHydrationGates} from '../../web/out'
 
 
 // Cache page init callbacks.
@@ -269,6 +269,15 @@ export class SSR {
 		style.removeAttribute('lupos')
 
 		return this.formatHTML(includeStyleTag ? style.outerHTML : style.textContent)
+	}
+
+	/** Render link point to next page. */
+	renderPagingLink(): string | null {
+		if (SSRPaging && SSRPaging.current < SSRPaging.total) {
+			return `<link rel="canonical" href="?page=${SSRPaging.current + 1}">`
+		}
+
+		return null
 	}
 
 	/** 
