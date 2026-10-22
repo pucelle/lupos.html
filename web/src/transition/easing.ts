@@ -2,10 +2,10 @@
 export type EasingFunction = (x: number) => number
 
 /** Web Animation easing names, for web animation and transition. */
-export type WebTransitionEasingName = keyof typeof CubicBezierEasingParameters | 'linear'
+export type WebTransitionEasingName = keyof typeof CUBIC_BEZIER_EASING_PARAMETERS | 'linear'
 
 /** Per frame easing names, for per-frame animation and transition. */
-export type PerFrameTransitionEasingName = keyof typeof CubicBezierEasingParameters | keyof typeof CustomEasingFunctions
+export type PerFrameTransitionEasingName = keyof typeof CUBIC_BEZIER_EASING_PARAMETERS | keyof typeof CUSTOM_EASING_FUNCTIONS
 
 
 /** 
@@ -13,7 +13,7 @@ export type PerFrameTransitionEasingName = keyof typeof CubicBezierEasingParamet
  * Comes from `Bourbon` source codes.
  * Can also reference to `https://easings.net/`.
  */
-const CubicBezierEasingParameters = {
+const CUBIC_BEZIER_EASING_PARAMETERS = {
 
 	// BASE
 	'ease'               : [0.250,  0.100, 0.250, 1.000],
@@ -53,7 +53,7 @@ const CubicBezierEasingParameters = {
 }
 
 /** Customized easing functions. */
-const CustomEasingFunctions = {
+const CUSTOM_EASING_FUNCTIONS = {
 
 	'linear'(x: number): number {
 		return x
@@ -100,7 +100,7 @@ const CustomEasingFunctions = {
 
 
 /** Cache compiled easing functions. */
-const EasingFunctionCache: Partial<Record<PerFrameTransitionEasingName, EasingFunction>> = {...CustomEasingFunctions}
+const EasingFunctionCache: Partial<Record<PerFrameTransitionEasingName, EasingFunction>> = {...CUSTOM_EASING_FUNCTIONS}
 
 
 /** From `https://easings.net/`. */
@@ -131,7 +131,7 @@ export function getEasingFunction(name: PerFrameTransitionEasingName): EasingFun
 		return EasingFunctionCache[name]!
 	}
 	else {
-		let [x1, y1, x2, y2] = CubicBezierEasingParameters[name as keyof typeof CubicBezierEasingParameters]
+		let [x1, y1, x2, y2] = CUBIC_BEZIER_EASING_PARAMETERS[name as keyof typeof CUBIC_BEZIER_EASING_PARAMETERS]
 		return EasingFunctionCache[name] = makeCubicBezierEasingFunction(x1, y1, x2, y2)
 	}
 }
@@ -194,7 +194,7 @@ function toDecimal(number: number, decimalCount: number): number {
 
 /** Get `cubic-bezier(...)` or `linear` as CSS easing name. */
 export function getCSSEasingValue(easing: WebTransitionEasingName): string {
-	return CubicBezierEasingParameters.hasOwnProperty(easing)
-		? 'cubic-bezier(' + CubicBezierEasingParameters[easing as keyof typeof CubicBezierEasingParameters].join(',') + ')'
+	return CUBIC_BEZIER_EASING_PARAMETERS.hasOwnProperty(easing)
+		? 'cubic-bezier(' + CUBIC_BEZIER_EASING_PARAMETERS[easing as keyof typeof CUBIC_BEZIER_EASING_PARAMETERS].join(',') + ')'
 		: easing
 }

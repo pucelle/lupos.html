@@ -48,7 +48,8 @@ export interface PerFrameTransitionOptions {
 }
 
 
-const DefaultPerFrameTransitionOptions: Required<PerFrameTransitionOptions> = {
+/** Default duration, easing, and delay for per-frame transitions. */
+const DEFAULT_PER_FRAME_TRANSITION_OPTIONS: Required<PerFrameTransitionOptions> = {
 	duration: 200,
 	easing: 'ease-out-quad',
 	delay: 0,
@@ -59,7 +60,7 @@ const DefaultPerFrameTransitionOptions: Required<PerFrameTransitionOptions> = {
 export class PerFrameTransition<T extends TransitionAbleValue = any> extends EventFirer<PerFrameTransitionEvents<T>> {
 
 	/** Default transition options. */
-	static DefaultOptions: Required<PerFrameTransitionOptions> = DefaultPerFrameTransitionOptions
+	static DefaultOptions: Required<PerFrameTransitionOptions> = DEFAULT_PER_FRAME_TRANSITION_OPTIONS
 
 
 	/** Calculated easing function. */
@@ -116,7 +117,7 @@ export class PerFrameTransition<T extends TransitionAbleValue = any> extends Eve
 
 	constructor(options: PerFrameTransitionOptions = {}) {
 		super()
-		this.options = {...DefaultPerFrameTransitionOptions, ...options}
+		this.options = {...DEFAULT_PER_FRAME_TRANSITION_OPTIONS, ...options}
 		this.delayTimeout = new Timeout(this.startTransition.bind(this), this.options.delay)
 		this.frameLoop = new FrameLoop(this.onFrameLoop.bind(this))
 		this.easingFn = getEasingFunction(this.options.easing)

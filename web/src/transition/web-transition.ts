@@ -18,14 +18,15 @@ export type WebTransitionEvents = Omit<PerFrameTransitionEvents<any>, 'progress'
 export type WebTransitionKeyFrame = Partial<CSSStyleDeclaration>
 
 
-const DefaultWebTransitionOptions: Required<WebTransitionOptions> = {
+/** Default duration, easing, and delay for web transitions. */
+const DEFAULT_WEB_TRANSITION_OPTIONS: Required<WebTransitionOptions> = {
 	duration: 200,
 	easing: 'ease-out-quad',
 	delay: 0,
 }
 
 /** The style property, which doesn't use `0` as default value. */
-const DefaultNotNumericStyleProperties: Record<string, string> = {
+const DEFAULT_NOT_NUMERIC_STYLE_PROPERTIES: Record<string, string> = {
 	transform: 'none'
 }
 
@@ -34,7 +35,7 @@ const DefaultNotNumericStyleProperties: Record<string, string> = {
 export class WebTransition extends EventFirer<WebTransitionEvents> {
 
 	/** Default web transition options. */
-	static DefaultOptions: Required<WebTransitionOptions> = DefaultWebTransitionOptions
+	static DefaultOptions: Required<WebTransitionOptions> = DEFAULT_WEB_TRANSITION_OPTIONS
 
 
 	/** The element transition playing at. */
@@ -70,7 +71,7 @@ export class WebTransition extends EventFirer<WebTransitionEvents> {
 	constructor(el: Element, options: WebTransitionOptions = {}) {
 		super()
 		this.el = el
-		this.options = {...DefaultWebTransitionOptions, ...options}
+		this.options = {...DEFAULT_WEB_TRANSITION_OPTIONS, ...options}
 	}
 
 	/** Whether transition is playing, or will run. */
@@ -131,7 +132,7 @@ export class WebTransition extends EventFirer<WebTransitionEvents> {
 		let style = getComputedStyle(this.el)
 
 		for (let property of Object.keys(startFrame)) {
-			(endFrame as any)[property] = (style as any)[property] || DefaultNotNumericStyleProperties[property] || '0'
+			(endFrame as any)[property] = (style as any)[property] || DEFAULT_NOT_NUMERIC_STYLE_PROPERTIES[property] || '0'
 		}
 
 		this.startFrame = startFrame
@@ -158,7 +159,7 @@ export class WebTransition extends EventFirer<WebTransitionEvents> {
 			let style = getComputedStyle(this.el)
 
 			for (let property of Object.keys(endFrame)) {
-				(startFrame as any)[property] = (style as any)[property] || DefaultNotNumericStyleProperties[property] || '0'
+				(startFrame as any)[property] = (style as any)[property] || DEFAULT_NOT_NUMERIC_STYLE_PROPERTIES[property] || '0'
 			}
 		}
 
