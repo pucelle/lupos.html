@@ -4,6 +4,35 @@ import {describe, it, expect} from 'vitest'
 import {hydrateCom} from './utils'
 
 
+describe('Hydration for keyed <lu:for>', () => {
+	it('keeps hydrated rows when objects are replaced with matching keys', async () => {
+
+		/** A keyed loop must snapshot identities during its first hydrated render. */
+		class Test extends Component {
+
+			/** Replacement objects keep the same logical row identities. */
+			rows = [{id: 1, name: 'one'}, {id: 2, name: 'two'}]
+
+			/** Render a keyed inline body for both server and hydrated component instances. */
+			override render() {
+				return html`<lu:for ${row} of ${this.rows} key="id"><div>${row.name}</div></lu:for>`
+			}
+		}
+
+		let {com, compare} = await hydrateCom(Test)
+		await UpdateQueue.untilComplete()
+		compare()
+		let nodes = [...com.el.querySelectorAll('div')]
+
+		com.rows = [{id: 1, name: 'first'}, {id: 2, name: 'second'}]
+		await UpdateQueue.untilComplete()
+		expect([...com.el.querySelectorAll('div')]).toEqual(nodes)
+		expect(nodes.map(node => node.textContent)).toEqual(['first', 'second'])
+		compare()
+	})
+})
+
+
 describe('Hydration for <lu:if>', () => {
 	it('hydrates <lu:if> when false', async () => {
 		class Test extends Component {

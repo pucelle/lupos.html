@@ -87,6 +87,7 @@ export class Checkbox extends Component {
 		```html
 		<lu:for ${...}>${(item) => ...}</lu:for>
 		```
+		Add `key="id"` or `key=${item => item.id}` to preserve row DOM and component state across object replacement and reordering. Keys must be unique. Inline bodies (`<lu:for ${item} of ${items} key="id">...</lu:for>`) and callback renderers accept the same option. Without a key, rows are matched by item identity.
 	- **if**: conditionally render one branch.
 		```html
 		<lu:if ${...} cache>...</lu:if>

@@ -1,7 +1,7 @@
 import {EditType, getEditRecord} from '../structs/edit'
 import {CompiledTemplateResult, HydrateNodesSplitter, Template, TemplateSlot} from '../template'
 import {Part, PartCallbackParameterMask, PartConnectedState} from '../part'
-import {beginTrack, endTrack, untrack, Updatable, UpdateQueue} from 'lupos'
+import {beginTrack, endTrack, trackGet, untrack, Updatable, UpdateQueue} from 'lupos'
 import {getIncrementalId} from '../iid'
 
 
@@ -11,6 +11,9 @@ import {getIncrementalId} from '../iid'
  * This must be a fixed function, or it would can't be optimized.
  */
 type ForBlockRenderFn = (item: any, index: number) => CompiledTemplateResult
+
+/** Stable identity selector; null or undefined restores item-identity matching. */
+export type ForBlockKey<T> = keyof T | ((item: T) => unknown) | null | undefined
 
 
 /** 
@@ -35,6 +38,15 @@ export class ForBlock<T = any> implements Updatable, Part {
 	private newData: T[] = []
 	private templates: Template[] = []
 
+	/** Explicit identity selector, or no selector for legacy item matching. */
+	private key: ForBlockKey<T>
+
+	/** Snapshot keys rather than re-reading potentially mutated old items. */
+	private oldKeys: unknown[] = []
+
+	/** Keys collected alongside the current render under dependency tracking. */
+	private newKeys: unknown[] = []
+
 	constructor(slot: TemplateSlot) {
 		this.slot = slot
 		this.hydrateNodes = this.slot.takeHydrateNodes()
@@ -47,6 +59,18 @@ export class ForBlock<T = any> implements Updatable, Part {
 		}
 
 		this.renderFn = renderFn
+	}
+
+	/** Update the selector and schedule reconciliation even when the iterable is unchanged. */
+	updateKey(key: ForBlockKey<T>) {
+		if (key === this.key) {
+			return
+		}
+
+		this.key = key
+		if (this.connected) {
+			this.willUpdate()
+		}
 	}
 
 	afterConnectCallback(_param: PartCallbackParameterMask | 0) {
@@ -99,8 +123,12 @@ export class ForBlock<T = any> implements Updatable, Part {
 		let oldData = this.oldData
 		let newData = this.newData
 		let oldTs = this.templates
-		let editRecord = getEditRecord(oldData, newData, true)
 		let newResults = this.renderItems()
+		let keyed = this.key !== null && this.key !== undefined
+
+		let editRecord = keyed
+			? getEditRecord(this.oldKeys, this.newKeys, false)
+			: getEditRecord(oldData, newData, true)
 
 		this.templates = []
 
@@ -111,7 +139,13 @@ export class ForBlock<T = any> implements Updatable, Part {
 			let result = toIndex >= 0 ? newResults[toIndex] : null
 
 			if (type === EditType.Leave || type === EditType.LeaveModify) {
-				this.leaveTemplate(fromT!, result!)
+				if (fromT!.canUpdateBy(result!)) {
+					this.leaveTemplate(fromT!, result!)
+				}
+				else {
+					this.createTemplate(result!, fromT)
+					this.removeTemplate(fromT!)
+				}
 			}
 			else if (type === EditType.Move || type === EditType.MoveModify) {
 				if (fromT!.canUpdateBy(result!)) {
@@ -133,6 +167,7 @@ export class ForBlock<T = any> implements Updatable, Part {
 
 		this.slot.updateExternalTemplateList(this.templates)
 		this.oldData = newData
+		this.oldKeys = this.newKeys
 	}
 
 	private renderItems(): CompiledTemplateResult[] {
@@ -142,6 +177,21 @@ export class ForBlock<T = any> implements Updatable, Part {
 		let meetsError = false
 
 		try {
+			let key = this.key
+			
+			this.newKeys = key === null || key === undefined ? this.newData : this.newData.map(item => {
+				if (typeof key === 'function') {
+					return key(item)
+				}
+				else {
+					if (typeof item === 'object' && item !== null || typeof item === 'function') {
+						trackGet(item, key)
+					}
+
+					return item[key]
+				}
+			})
+
 			results = this.newData.map((item, toIndex) => {
 				return this.renderFn(item, toIndex)
 			})
@@ -189,6 +239,7 @@ export class ForBlock<T = any> implements Updatable, Part {
 		this.slot.updateExternalTemplateList(this.templates)
 
 		this.oldData = this.newData
+		this.oldKeys = this.newKeys
 		this.hydrateNodes = undefined
 	}
 

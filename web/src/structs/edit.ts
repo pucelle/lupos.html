@@ -95,7 +95,7 @@ export const enum EditType {
 }
 
 
-/** Get a edit record from an old indices graph to a new one. */
+/** Get edit records; when willReuse is false, unmatched identities are never reused. */
 export function getEditRecord<T>(oldItems: T[], newItems: T[], willReuse: boolean): EditRecord[] {
 	if (newItems.length === 0) {
 		return oldItems.map(function(_item, index) {
@@ -135,7 +135,7 @@ export function getEditRecord<T>(oldItems: T[], newItems: T[], willReuse: boolea
 
 	// Not enough reused rate, update all elements one by one to new items, no moving happens.
 	// We assume one moving equals about 5 modifications (for complex app it's larger).
-	if (oldReuseRate < 0.2) {
+	if (willReuse && oldReuseRate < 0.2) {
 		return getNonMovableEditRecord(oldItems, newItems)
 	}
 	else {
