@@ -226,6 +226,12 @@ export class WebTransition extends EventFirer<WebTransitionEvents> {
 			this.onCanceled()
 		}
 
+		// An inert template document cannot advance its animation timeline.
+		let activeDocument = this.el.ownerDocument.defaultView?.document ?? document
+		if (this.animation.timeline !== activeDocument.timeline) {
+			this.cancel()
+		}
+
 		let finish = await promise
 		if (finish) {
 			this.startFrame = this.endFrame
