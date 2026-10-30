@@ -33,7 +33,7 @@ export class RefBinding implements Binding, Part {
 	protected readonly el: Element
 	protected readonly context: any
 
-	/** For caching referenced binding. */
+	/** Cache the referenced binding or component across template reconnections. */
 	protected refValue: Component | Element | Binding | null = null
 
 	/** Whether reference element, or component, or binding. */
@@ -77,9 +77,16 @@ export class RefBinding implements Binding, Part {
 			this.refed = true
 		}
 		else if (this.refType === RefType.Component) {
-			let com = Component.from(this.el)
-			this.refFn!.call(this.context, com)
-			this.refed = !!com
+
+			// Component may disconnect and not connected yet,
+			// so `Component.from(this.el)` returns undefined.
+			let com = this.refValue as Component | null ?? Component.from(this.el)
+
+			if (com) {
+				this.refValue = com
+				this.refFn!.call(this.context, com)
+				this.refed = true
+			}
 		}
 		else {
 			this.refFn!.call(this.context, this.refValue)

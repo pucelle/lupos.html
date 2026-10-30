@@ -277,7 +277,10 @@ export class Component<E = any> extends EventFirer<E & ComponentEvents> implemen
 
 		if (connected) {
 			untrack(this)
+
+			// Must delete, using Element as key will cause it not trigger GC.
 			deleteElementComponentMap(this.el)
+
 			this.onWillDisconnect()
 			this.fire('will-disconnect')
 			
