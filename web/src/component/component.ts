@@ -1,4 +1,4 @@
-import {ContextVariableConstructor, EventFirer, Observed, UpdateQueue, beginTrack, endTrack, Updatable, promisify, untrack, trackGet, trackSet, IN_DEV} from 'lupos'
+import {ContextVariableConstructor, EventFirer, UpdateQueue, beginTrack, endTrack, Updatable, promisify, untrack, trackGet, trackSet, IN_DEV, getIncrementalId, Observed} from 'lupos'
 import {TemplateStyle} from './style'
 import {addElementComponentMap, deleteElementComponentMap, completeHydration, getComponentByElement, needsHydrateFrom} from './from-element'
 import {TemplateSlot, SlotPosition, SlotPositionType, CompiledTemplateResult, SlotContentType} from '../template'
@@ -6,7 +6,6 @@ import {ComponentConstructor, RenderResult} from './types'
 import {getComponentSlotParameter, Part, PartCallbackParameterMask} from '../part'
 import {SlotRange} from '../template/slot-range'
 import {deleteContextVariables, getContextVariableDeclared, setContextVariable} from './context-variable'
-import {getIncrementalId} from '../iid'
 import {IN_SSR} from '../ssr'
 
 

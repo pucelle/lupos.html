@@ -1,8 +1,7 @@
 import {EditType, getEditRecord} from '../structs/edit'
 import {CompiledTemplateResult, HydrateNodesSplitter, Template, TemplateSlot} from '../template'
 import {Part, PartCallbackParameterMask, PartConnectedState} from '../part'
-import {beginTrack, endTrack, trackGet, untrack, Updatable, UpdateQueue} from 'lupos'
-import {getIncrementalId} from '../iid'
+import {beginTrack, endTrack, trackGet, untrack, Updatable, UpdateQueue, getIncrementalId} from 'lupos'
 
 
 /** 
