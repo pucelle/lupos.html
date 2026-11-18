@@ -10,7 +10,7 @@ export class HydrateNodesSplitter {
 	private fromIndex: number = 0
 
 	constructor(hydrateNodes: ArrayLike<ChildNode>) {
-		this.hydrateNodes = hydrateNodes
+		this.hydrateNodes = Array.isArray(hydrateNodes) ? hydrateNodes : Array.from(hydrateNodes)
 	}
 
 	/** Split nodes for a compiled template result */
@@ -21,12 +21,12 @@ export class HydrateNodesSplitter {
 			this.template = tr.maker.make(tr.context)
 		}
 
-		let hIndex = this.fromIndex
+		let nodes: ChildNode[] = []
 		let templateNodes = this.template.el.content.childNodes
 
 		for (let tIndex = 0; tIndex < templateNodes.length; tIndex++) {
 			let tNode = templateNodes[tIndex]
-			let hNode = hIndex < this.hydrateNodes.length ? this.hydrateNodes[hIndex] : null
+			let hNode = this.hydrateNodes[this.fromIndex]
 			let hNodeMismatch = true
 
 			if (!hNode) {
@@ -45,12 +45,15 @@ export class HydrateNodesSplitter {
 
 				// Search for the match comment marker.
 				if (hNodeMismatch) {
-					for (let i = hIndex + 1; i < this.hydrateNodes.length; i++) {
+					for (let i = this.fromIndex + 1; i < this.hydrateNodes.length; i++) {
 						let n = this.hydrateNodes[i]
 						if (n.nodeType === Node.COMMENT_NODE
 							&& n.textContent === commentId
 						) {
-							hIndex = i
+							while (this.fromIndex < i) {
+								nodes.push(this.hydrateNodes[this.fromIndex++])
+							}
+
 							hNode = n
 							hNodeMismatch = false
 							break
@@ -59,11 +62,20 @@ export class HydrateNodesSplitter {
 				}
 			}
 			else if (tNode.nodeType === Node.TEXT_NODE) {
-				hNodeMismatch = hNode.nodeType !== Node.TEXT_NODE
+				
+				// HTML parsing drops empty text and coalesces adjacent text across template boundaries.
+				if (hNode.nodeType !== Node.TEXT_NODE) {
+					let text = tNode.cloneNode() as Text
+					hNode.before(text)
+					nodes.push(text)
+					continue
+				}
+
+				hNodeMismatch = false
 			}
 
-			// Eat this node whether match or not.
-			hIndex++
+			nodes.push(hNode)
+			this.fromIndex++
 
 			// Missing match, exit.
 			if (hNodeMismatch) {
@@ -71,10 +83,7 @@ export class HydrateNodesSplitter {
 			}
 		}
 
-		let nodes = hIndex === this.fromIndex ? undefined : Array.prototype.slice.call(this.hydrateNodes, this.fromIndex, hIndex)
-		this.fromIndex = hIndex
-
-		return nodes
+		return nodes.length ? nodes : undefined
 	}
 
 	/** Removes rest nodes. */

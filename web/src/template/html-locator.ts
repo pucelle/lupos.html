@@ -159,7 +159,18 @@ export class HydrateHTMLLocator {
 				// Missing match, insert text before current node.
 				if (hNodeMismatch) {
 					let newText = tNode.cloneNode(true) as ChildNode
-					hNode!.before(newText)
+					hNode.before(newText)
+					if (depth === 0) {
+						this.hydratedNodes[tIndex] = newText
+					}
+
+					// A live childNodes list now includes the new text; a supplied array still starts at hNode.
+					if (hydrateNodes[hIndex] === newText) {
+						hIndex++
+					}
+
+					latestHNode = newText
+					continue
 				}
 				else {
 					hNode.textContent = tNode.textContent
@@ -167,7 +178,7 @@ export class HydrateHTMLLocator {
 			}
 
 			if (depth === 0) {
-				this.hydratedNodes[hIndex] = hNode
+				this.hydratedNodes[tIndex] = hNode
 			}
 			
 			latestHNode = hNode

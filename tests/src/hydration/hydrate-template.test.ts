@@ -5,6 +5,67 @@ import {hydrateCom} from './utils'
 
 
 describe('Hydration for template', () => {
+	it.each(['', '1. '])('restores adjacent text with prefix "%s" and reuses the following component', async prefix => {
+		class Figure extends Component {
+			override render() {
+				return html`<figcaption>Map</figcaption>`
+			}
+		}
+
+		class Story extends Component {
+			prefix: string = prefix
+			space: string = ' '
+
+			override render() {
+				let pieces = [html`${this.space}`, html`<Figure tagName="figure" />`]
+				return html`<div>${this.prefix}${pieces}</div>`
+			}
+		}
+
+		let original!: HTMLElement
+		let {com} = await hydrateCom(Story, Story, el => {
+			original = el.querySelector('figure')!
+		})
+
+		expect(com.el.querySelectorAll('figure')).toHaveLength(1)
+		expect(com.el.querySelector('figure')).toBe(original)
+		expect(com.el.textContent).toBe(prefix + ' Map')
+
+		com.prefix = '2. '
+		com.space = ' / '
+		await UpdateQueue.untilComplete()
+
+		expect(com.el.textContent).toBe('2.  / Map')
+		expect(com.el.querySelector('figure')).toBe(original)
+	})
+
+	it('restores an empty leading text binding before an existing root element', async () => {
+		class Story extends Component {
+			prefix: string = ''
+
+			override render() {
+				return html`<section>${this.renderContent()}</section>`
+			}
+
+			private renderContent() {
+				return html`${this.prefix}<figure>Map</figure>`
+			}
+		}
+
+		let original!: HTMLElement
+		let {com} = await hydrateCom(Story, Story, el => {
+			original = el.querySelector('figure')!
+		})
+
+		com.prefix = 'Step: '
+		await UpdateQueue.untilComplete()
+
+		expect(com.el.textContent).toBe('Step: Map')
+		expect(com.el.querySelectorAll('figure')).toHaveLength(1)
+		expect(com.el.querySelector('figure')).toBe(original)
+	})
+
+
 	it('hydrates inner properties', async () => {
 		class Test extends Component {
 			prop: string = 'abc'

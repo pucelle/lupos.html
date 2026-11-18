@@ -55,7 +55,7 @@ class NodesCloner {
 }
 
 
-export async function hydrateCom<T extends {new(el?: HTMLElement, willHydrate?: boolean): any}>(Com: T, HydrateBy: T = Com):
+export async function hydrateCom<T extends {new(el?: HTMLElement, willHydrate?: boolean): any}>(Com: T, HydrateBy: T = Com, beforeHydrate?: (el: HTMLElement) => void):
 	Promise<{ com: InstanceType<T>, compare: () => void }>
 {
 	let com = new Com()
@@ -70,6 +70,7 @@ export async function hydrateCom<T extends {new(el?: HTMLElement, willHydrate?: 
 
 	let el = template.content.firstElementChild as HTMLElement
 	let cloner = new NodesCloner(el)
+	beforeHydrate?.(el)
 	let newCom = new HydrateBy(el)
 	willHydrateFrom(el, el.firstChild)
 	await newCom.connectManually()
