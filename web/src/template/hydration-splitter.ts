@@ -64,6 +64,7 @@ export class HydrateNodesSplitter {
 			else if (tNode.nodeType === Node.TEXT_NODE) {
 				
 				// HTML parsing drops empty text and coalesces adjacent text across template boundaries.
+				// So here we fix it by adding new text node here.
 				if (hNode.nodeType !== Node.TEXT_NODE) {
 					let text = tNode.cloneNode() as Text
 					hNode.before(text)

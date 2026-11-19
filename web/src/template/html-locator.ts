@@ -160,11 +160,15 @@ export class HydrateHTMLLocator {
 				if (hNodeMismatch) {
 					let newText = tNode.cloneNode(true) as ChildNode
 					hNode.before(newText)
+
 					if (depth === 0) {
 						this.hydratedNodes[tIndex] = newText
 					}
 
-					// A live childNodes list now includes the new text; a supplied array still starts at hNode.
+					// A live childNodes list now includes the new text.
+					// Not enter when hydrateNodes is a snapshot array.
+					// That happens, for example, when component hydration starts after
+					// the first child and initContentSlot passes a slice of childNodes.
 					if (hydrateNodes[hIndex] === newText) {
 						hIndex++
 					}
