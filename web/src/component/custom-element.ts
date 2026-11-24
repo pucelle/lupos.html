@@ -137,31 +137,26 @@ function onCustomElementDisconnected(el: HTMLElement) {
 
 
 
-let hydrationGates: Promise<any>[] | null = null
+/** Pending work shared by hydration callers until each gate settles. */
+const hydrationGates = new Set<Promise<any>>()
+
 
 /** 
  * Add hydration gates, which is a promise list,
  * after which resolved hydration can be continued.
  */
 export function addHydrationGates(...gates: Promise<any>[]) {
-	if (!hydrationGates) {
-		hydrationGates = []
+	for (let gate of gates) {
+		hydrationGates.add(gate)
+
+		let remove = () => hydrationGates.delete(gate)
+		gate.then(remove, remove)
 	}
-
-	hydrationGates.push(...gates)
-
-	Promise.all(gates).then(() => {
-		hydrationGates = hydrationGates!.filter(g => !gates.includes(g))
-
-		if (hydrationGates.length === 0) {
-			hydrationGates = null
-		}
-	})
 }
 
-/** Wait for gate promises resolved. */
+/** Wait for the current gates, propagating failures to their callers. */
 export function waitHydrationGates(): Promise<any> | undefined {
-	if (hydrationGates) {
+	if (hydrationGates.size > 0) {
 		return Promise.all(hydrationGates)
 	}
 
