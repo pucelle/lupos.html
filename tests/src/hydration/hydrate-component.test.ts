@@ -60,6 +60,39 @@ describe('Hydration for component', () => {
 	})
 
 
+	it('rebuilds only the sidebar contents when its rest-slot marker is stale', async () => {
+		class Sidebar extends Component {
+			declare static tagName: 'nav'
+		}
+
+		class Page extends Component {
+			label = 'Stories'
+
+			protected render() {
+				return html`<Sidebar><ul><li>${this.label}</li></ul></Sidebar><main>Article</main>`
+			}
+		}
+
+		let sidebar: Element
+		let article: Element
+
+		let {com} = await hydrateCom(Page, Page, el => {
+			sidebar = el.querySelector('nav')!
+			article = el.querySelector('main')!
+			expect(sidebar.firstChild!.nodeType).toBe(Node.COMMENT_NODE)
+			sidebar.firstChild!.textContent = 'old-marker'
+		})
+
+		com.label = 'Updated stories'
+		await UpdateQueue.untilComplete()
+
+		expect(com.el.querySelector('nav')).toBe(sidebar!)
+		expect(com.el.querySelector('main')).toBe(article!)
+		expect(sidebar!.querySelectorAll('ul')).toHaveLength(1)
+		expect(sidebar!.textContent).toBe('Updated stories')
+	})
+
+
 	it('hydrates <slot>', async () => {
 		class Parent extends Component {
 			protected render() {

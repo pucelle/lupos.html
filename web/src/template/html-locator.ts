@@ -236,9 +236,8 @@ export class HydrateHTMLLocator {
 			}
 		}
 
-		// We make a new empty template to cache cloned nodes,
-		// to make locator can at least locate these nodes.
-		// and also insert into parent `hNode` as silent rest slot nodes.
+		// Without the boundary, the child must render afresh. Discard its stale
+		// subtree before installing the parent-owned slot nodes.
 		else {
 			let template = document.createElement('template')
 
@@ -248,7 +247,7 @@ export class HydrateHTMLLocator {
 			}
 
 			this.walkAndMapMarkers(template.content)
-			hNode.appendChild(template.content)
+			hNode.replaceChildren(template.content)
 		}
 	}
 
