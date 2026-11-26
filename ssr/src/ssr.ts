@@ -155,10 +155,18 @@ export class SSR {
 		return this.formatHTML(includeStyleTag ? style.outerHTML : style.textContent)
 	}
 
-	/** Render link point to next page. */
-	renderPagingLink(): string | null {
+	/** Render a crawlable link to the next slice, retaining public query filters. */
+	renderPagingLink(query = new URLSearchParams(), label?: string): string | null {
 		if (SSRPaging && SSRPaging.current < SSRPaging.total) {
-			return `<link rel="canonical" href="?page=${SSRPaging.current + 1}">`
+			let next = SSRPaging.current + 1
+			let params = new URLSearchParams(query)
+			params.set('page', String(next))
+
+			let anchor = this.document.createElement('a')
+			anchor.setAttribute('rel', 'next')
+			anchor.setAttribute('href', '?' + params.toString())
+			anchor.textContent = label ?? String(next)
+			return anchor.outerHTML
 		}
 
 		return null
